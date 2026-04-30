@@ -2,15 +2,19 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
+require('dotenv').config();
+
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 
-mongoose.connect('mongodb+srv://lancemanemail_db_user:KvK0MOxjl5EbIK12@church.bfa7div.mongodb.net/churchDB?retryWrites=true&w=majority')
-  .then(() => console.log("✅ MongoDB connected successfully"))
-  .catch(err => console.log("❌ Connection error:", err));
+const mongoURI = process.env.MONGODB_URI; 
+
+mongoose.connect(mongoURI)
+  .then(() => console.log("MongoDB Connected"))
+  .catch(err => console.log(err));
 
 const MemberSchema = new mongoose.Schema({
   firstName: String,
