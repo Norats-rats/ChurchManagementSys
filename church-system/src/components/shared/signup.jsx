@@ -1,5 +1,5 @@
+import api from '.src/api'; //[cite: 11] Ensure the path to your api.js is correct
 import { useState } from 'react';
-
 
 const Signup = ({ onGoToLogin }) => {
   const [formData, setFormData] = useState({
@@ -18,27 +18,25 @@ const Signup = ({ onGoToLogin }) => {
     });
   };
 
-const handleSignup = async (e) => {
-  e.preventDefault();
-  
-  try {
-    const response = await fetch('http://localhost:5000/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData) 
-    });
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    
+    try {
+      // Replaced manual fetch with the api client[cite: 11]
+      const response = await api.register(formData); 
 
-    if (response.ok) {
-      alert("Registration successful!");
-      onGoToLogin();
-    } else {
-      const errorData = await response.json();
-      alert(errorData.error);
+      // Axios considers 2xx status codes as successful
+      if (response.status === 200 || response.status === 201) {
+        alert("Registration successful!");
+        onGoToLogin();
+      }
+    } catch (err) {
+      // Axios stores the server error response in err.response.data
+      const errorMessage = err.response?.data?.error || "Signup error. Please try again.";
+      alert(errorMessage);
+      console.error("Signup error:", err);
     }
-  } catch (err) {
-    console.error("Signup error:", err);
-  }
-};
+  };
 
   return (
     <div className="main-container">

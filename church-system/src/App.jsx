@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import './App.css';
+import api from './api'; //[cite: 12] Ensure path is correct
 import Signup from './components/shared/signup';
 import Dashboard from './roles/admin/dashboard';
 
@@ -12,13 +12,9 @@ const LoginScreen = ({ onLoginSuccess, onGoToSignup }) => {
     e.preventDefault();
 
     try {
-      const response = await fetch('http://localhost:5000/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await response.json();
+      // Replaced manual fetch with api call[cite: 12]
+      const response = await api.login({ email, password });
+      const data = response.data;
 
       if (data.success) {
         onLoginSuccess(data.role, data.user); 
@@ -26,7 +22,8 @@ const LoginScreen = ({ onLoginSuccess, onGoToSignup }) => {
         alert(data.message);
       }
     } catch (err) {
-      alert("Server error. Is your backend running? Make sure to run 'node server.js'");
+      const errorMsg = err.response?.data?.message || "Server error. Is your backend running?";
+      alert(errorMsg);
     }
   };
 

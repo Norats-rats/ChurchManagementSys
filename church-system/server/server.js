@@ -9,8 +9,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use(cors({
+  origin: "https://churchmanagementsys.pages.dev"
+}));
 
 const mongoURI = process.env.MONGODB_URI; 
+
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  credentials: true
+}));
 
 mongoose.connect(mongoURI)
   .then(() => console.log("MongoDB Connected"))
