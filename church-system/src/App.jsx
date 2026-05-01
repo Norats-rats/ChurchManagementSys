@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import api from './api'; // Added this import[cite: 7]
 import './App.css';
 import Signup from './components/shared/signup';
 import Dashboard from './roles/admin/dashboard';
@@ -8,21 +9,23 @@ const LoginScreen = ({ onLoginSuccess, onGoToSignup }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-const handleLogin = async (e) => {
-  e.preventDefault();
-  try {
-    const response = await api.register({ email, password }); 
-    const data = response.data;
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      // Replaced local fetch with the api utility[cite: 7]
+      const response = await api.login({ email, password }); 
+      const data = response.data;
 
-    if (data.success) {
-      onLoginSuccess(data.role, data.user); 
-    } else {
-      alert(data.message);
+      if (data.success) {
+        onLoginSuccess(data.role, data.user); 
+      } else {
+        alert(data.message || "Invalid credentials");
+      }
+    } catch (err) {
+      // Updated error message for better clarity[cite: 7]
+      alert("Connection error. Ensure VITE_API_URL is set in Cloudflare and the backend is running.");
     }
-  } catch (err) {
-    alert("Connection error. Please check if the backend URL is correct.");
-  }
-};
+  };
 
   return (
     <div className="main-container">
@@ -128,10 +131,8 @@ export default function App() {
             }} 
           />
         );
-      
       case 'signup':
         return <Signup onGoToLogin={() => setView('login')} />;
-      
       case 'login':
       default:
         return (

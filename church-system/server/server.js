@@ -9,12 +9,12 @@ const app = express();
 // --- 1. MIDDLEWARE ---
 app.use(express.json());
 
-// Configure CORS properly for Cloudflare and Local Development
+// Configure CORS for both your live Cloudflare site and local testing[cite: 5]
 app.use(cors({
   origin: [
-    process.env.FRONTEND_URL, 
-    "http://localhost:5173", 
-    "https://churchmanagementsys.pages.dev"
+    process.env.FRONTEND_URL,              // Dynamically pulled from Railway variables[cite: 5]
+    "https://churchmanagementsys.pages.dev", // Your specific Cloudflare URL[cite: 5]
+    "http://localhost:5173"                // For local Vite development[cite: 5]
   ],
   credentials: true
 }));
@@ -91,6 +91,11 @@ const Transaction = mongoose.model('transactions', new mongoose.Schema({
 }, { timestamps: true }));
 
 // --- 4. ROUTES ---
+
+// Root route to confirm the API is online[cite: 3, 5]
+app.get('/', (req, res) => {
+  res.send('Church Management API is Online and Running');
+});
 
 // AUTH ROUTES
 app.post('/register', async (req, res) => {
@@ -206,11 +211,17 @@ app.delete('/api/members/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: "Failed to delete" }); }
 });
 
-// ATTENDANCE & EVENTS (Condensed for brevity)
+// ATTENDANCE & EVENTS
 app.post('/api/attendance', async (req, res) => {
   try {
     const { userId, name, service, checkInTime, status } = req.body;
-    const newRecord = new Attendance({ userId: String(userId), name, service, checkInTime: checkInTime || new Date().toISOString(), status: status || 'Present' });
+    const newRecord = new Attendance({ 
+      userId: String(userId), 
+      name, 
+      service, 
+      checkInTime: checkInTime || new Date().toISOString(), 
+      status: status || 'Present' 
+    });
     await newRecord.save();
     res.status(201).json(newRecord);
   } catch (err) { res.status(500).json({ error: "Internal Server Error" }); }

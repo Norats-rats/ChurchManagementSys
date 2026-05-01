@@ -1,5 +1,8 @@
 import axios from 'axios';
+
+// This pulls the URL from your Cloudflare Environment Variables[cite: 6]
 const API_BASE = import.meta.env.VITE_API_URL;
+
 const apiClient = axios.create({
   baseURL: API_BASE,
   headers: {
@@ -9,6 +12,7 @@ const apiClient = axios.create({
 
 export const api = {
   // Authentication & Users
+  login: (credentials) => apiClient.post('/login', credentials), // Added login method[cite: 6]
   register: (formData) => apiClient.post('/register', formData),
   getMembers: () => apiClient.get('/api/members'),
   createMember: (memberData) => apiClient.post('/api/members', memberData),
