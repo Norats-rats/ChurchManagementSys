@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import Analytics from './Analytics';
-import AttendanceTab from './AttendanceTab';
-import EventTab from './EventTab';
-import Finances from './Finances';
-import MemberForm from './MemberForm';
-import Ministries from './Ministries';
-import Prayers from './Prayers';
+import Analytics from './analyticz';
+import AttendanceTab from './attendancetab';
+import EventTab from './eventtab';
+import Finances from './finances';
+import MemberForm from './memberform';
+import Ministries from './ministries';
+import Prayers from './prayers';
 
 const Dashboard = ({ user, role: rawRole, onLogout }) => {
   const role = rawRole?.toLowerCase().includes('member') ? 'Member' : rawRole;
