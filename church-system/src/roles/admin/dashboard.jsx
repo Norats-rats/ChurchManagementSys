@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import api from '../api';
 import Analytics from './analyticz';
 import AttendanceTab from './attendancetab';
 import EventTab from './eventtab';
@@ -40,53 +41,53 @@ const Dashboard = ({ user, role: rawRole, onLogout }) => {
     }
   }, [currentTab]);
 
-const fetchDailyVerse = async () => {
-  try {
-    const bibleStructure = [
-      { name: "Genesis", chapters: 50 }, { name: "Exodus", chapters: 40 },
-      { name: "Psalms", chapters: 150 }, { name: "Proverbs", chapters: 31 },
-      { name: "Matthew", chapters: 28 }, { name: "John", chapters: 21 },
-      { name: "Romans", chapters: 16 }, { name: "Philippians", chapters: 4 }
-    ];
+  const fetchDailyVerse = async () => {
+    try {
+      const bibleStructure = [
+        { name: "Genesis", chapters: 50 }, { name: "Exodus", chapters: 40 },
+        { name: "Psalms", chapters: 150 }, { name: "Proverbs", chapters: 31 },
+        { name: "Matthew", chapters: 28 }, { name: "John", chapters: 21 },
+        { name: "Romans", chapters: 16 }, { name: "Philippians", chapters: 4 }
+      ];
 
-    const randomBook = bibleStructure[Math.floor(Math.random() * bibleStructure.length)];
-    const randomChapter = Math.floor(Math.random() * randomBook.chapters) + 1;
+      const randomBook = bibleStructure[Math.floor(Math.random() * bibleStructure.length)];
+      const randomChapter = Math.floor(Math.random() * randomBook.chapters) + 1;
 
-    const response = await fetch(`https://bible-api.com/${randomBook.name}+${randomChapter}`);
-    const data = await response.json();
+      const response = await fetch(`https://bible-api.com/${randomBook.name}+${randomChapter}`);
+      const data = await response.json();
 
-    if (data.verses && data.verses.length > 0) {
-      const randomVerseIndex = Math.floor(Math.random() * data.verses.length);
-      const selectedVerse = data.verses[randomVerseIndex];
+      if (data.verses && data.verses.length > 0) {
+        const randomVerseIndex = Math.floor(Math.random() * data.verses.length);
+        const selectedVerse = data.verses[randomVerseIndex];
 
-      setDailyVerse({
-        text: selectedVerse.text,
-        reference: `${selectedVerse.book_name} ${selectedVerse.chapter}:${selectedVerse.verse}`
+        setDailyVerse({
+          text: selectedVerse.text,
+          reference: `${selectedVerse.book_name} ${selectedVerse.chapter}:${selectedVerse.verse}`
+        });
+      }
+    } catch (err) {
+      console.error("Bible API error:", err);
+      setDailyVerse({ 
+        text: "For God so loved the world, that he gave his only begotten Son.", 
+        reference: "John 3:16" 
       });
     }
-  } catch (err) {
-    console.error("Bible API error:", err);
-    setDailyVerse({ 
-      text: "For God so loved the world, that he gave his only begotten Son.", 
-      reference: "John 3:16" 
-    });
-  }
-};
+  };
 
   const fetchDashboardStats = async () => {
     setLoadingStats(true);
     try {
       const [membersRes, financeRes, eventsRes, attendanceRes] = await Promise.all([
-        fetch('http://localhost:5000/api/members'),
-        fetch('http://localhost:5000/api/finances'),
-        fetch('http://localhost:5000/api/events'),
-        fetch('http://localhost:5000/api/attendance')
+        api.getMembers(),
+        api.getFinances(),
+        api.getEvents(),
+        api.getAttendance()
       ]);
 
-      const members = await membersRes.json();
-      const financeData = await financeRes.json();
-      const events = await eventsRes.json();
-      const attendance = await attendanceRes.json();
+      const members = membersRes.data;
+      const financeData = financeRes.data;
+      const events = eventsRes.data;
+      const attendance = attendanceRes.data;
 
       setStats({
         memberCount: Array.isArray(members) ? members.length : 0,
@@ -177,10 +178,7 @@ const fetchDailyVerse = async () => {
 
           {currentTab === 'members' && role === 'Admin' && <MemberForm />}
           {currentTab === 'events' && <EventTab role={role} userId={user._id} />}
-          
-          {/* FIX: Passed user object to AttendanceTab to solve naming issue */}
           {currentTab === 'attendance' && <AttendanceTab role={role} userId={user._id} user={user} />}
-          
           {currentTab === 'finances' && <Finances role={role} userId={user._id} />}
           {currentTab === 'ministries' && <Ministries role={role} />}
           {currentTab === 'prayers' && <Prayers role={role} user={user} />}
