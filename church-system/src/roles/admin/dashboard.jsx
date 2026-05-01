@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
+import api from '../../api';
 import Analytics from './analyticz';
-import api from './api';
 import AttendanceTab from './attendancetab';
 import EventTab from './eventtab';
 import Finances from './finances';
