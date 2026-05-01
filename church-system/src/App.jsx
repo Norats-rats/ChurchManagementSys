@@ -8,27 +8,21 @@ const LoginScreen = ({ onLoginSuccess, onGoToSignup }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+const handleLogin = async (e) => {
+  e.preventDefault();
+  try {
+    const response = await api.register({ email, password }); 
+    const data = response.data;
 
-    try {
-      const response = await fetch('http://localhost:5000/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        onLoginSuccess(data.role, data.user); 
-      } else {
-        alert(data.message);
-      }
-    } catch (err) {
-      alert("Server error. Is your backend running? Make sure to run 'node server.js'");
+    if (data.success) {
+      onLoginSuccess(data.role, data.user); 
+    } else {
+      alert(data.message);
     }
-  };
+  } catch (err) {
+    alert("Connection error. Please check if the backend URL is correct.");
+  }
+};
 
   return (
     <div className="main-container">
