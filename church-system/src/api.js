@@ -30,6 +30,7 @@ export const api = {
 
   // Attendance Logs
   getAttendance: () => apiClient.get('/api/attendance'),
+  getAttendance: () => api.get('/api/attendance'),
   recordAttendance: (checkInData) => apiClient.post('/api/attendance', checkInData),
 
   // Finances
