@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@emnapi/core": "^1.10.0",
