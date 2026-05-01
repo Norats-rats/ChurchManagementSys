@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import api from '../../api';
 
 const MemberForm = () => {
     const [firstName, setFirstName] = useState("");
@@ -7,7 +8,7 @@ const MemberForm = () => {
     const [password, setPassword] = useState(""); 
     const [address, setAddress] = useState("");
     const [ministry, setMinistry] = useState("Worship Team");
-    const [role, setRole] = useState("Member"); // Added for RBAC
+    const [role, setRole] = useState("Member");
     
     const [searchQuery, setSearchQuery] = useState("");
     const [filterMinistry, setFilterMinistry] = useState("All Ministries");
@@ -22,8 +23,8 @@ const MemberForm = () => {
 
     const fetchMembers = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/members');
-            const data = await response.json();
+            const response = await api.getMembers();
+            const data = response.data;
             if (Array.isArray(data)) {
                 setAllMembers(data);
             }
@@ -51,19 +52,13 @@ const MemberForm = () => {
         };
 
         try {
-            const url = isEditing ? `http://localhost:5000/api/members/${editId}` : 'http://localhost:5000/api/members';
-            const method = isEditing ? 'PUT' : 'POST';
-
-            const response = await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(memberData)
-            });
-
-            if (response.ok) {
-                resetForm();
-                fetchMembers();
+            if (isEditing) {
+                await api.updateMember(editId, memberData); 
+            } else {
+                await api.createMember(memberData);
             }
+            resetForm();
+            fetchMembers();
         } catch (err) {
             alert("Could not save to database.");
         }
@@ -77,18 +72,22 @@ const MemberForm = () => {
 
     const toggleStatus = async (id, currentStatus) => {
         const newStatus = currentStatus === "Active" ? "Inactive" : "Active";
-        await fetch(`http://localhost:5000/api/members/${id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: newStatus })
-        });
-        fetchMembers();
+        try {
+            await api.updateUserStatus(id, newStatus);
+            fetchMembers();
+        } catch (err) {
+            console.error("Failed to update status");
+        }
     };
 
     const deleteMember = async (id) => {
         if (!window.confirm("Are you sure you want to permanently delete this user?")) return;
-        await fetch(`http://localhost:5000/api/members/${id}`, { method: 'DELETE' });
-        fetchMembers();
+        try {
+            await api.deleteMember(id);
+            fetchMembers();
+        } catch (err) {
+            alert("Delete failed");
+        }
     };
 
     const startEdit = (member) => {
