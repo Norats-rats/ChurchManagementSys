@@ -1,5 +1,5 @@
-import api from '.src/api'; //[cite: 11] Ensure the path to your api.js is correct
 import { useState } from 'react';
+import api from '../../api';
 
 const Signup = ({ onGoToLogin }) => {
   const [formData, setFormData] = useState({
