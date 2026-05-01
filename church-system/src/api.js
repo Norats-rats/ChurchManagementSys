@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// This pulls the URL from your Cloudflare Environment Variables[cite: 6]
 const API_BASE = import.meta.env.VITE_API_URL;
 
 const apiClient = axios.create({
@@ -11,26 +10,24 @@ const apiClient = axios.create({
 });
 
 export const api = {
-  // Authentication & Users
-  login: (credentials) => apiClient.post('/login', credentials), // Added login method[cite: 6]
+  // Authentication
+  login: (credentials) => apiClient.post('/login', credentials),
   register: (formData) => apiClient.post('/register', formData),
+
+  // Members
   getMembers: () => apiClient.get('/api/members'),
   createMember: (memberData) => apiClient.post('/api/members', memberData),
   updateMember: (id, memberData) => apiClient.put(`/api/members/${id}`, memberData),
   deleteMember: (id) => apiClient.delete(`/api/members/${id}`),
-  updateUserStatus: (id, status) => apiClient.patch(`/api/members/${id}`, { status }),
 
   // Events
   getEvents: () => apiClient.get('/api/events'),
   createEvent: (eventData) => apiClient.post('/api/events', eventData),
   updateEvent: (id, eventData) => apiClient.put(`/api/events/${id}`, eventData),
   deleteEvent: (id) => apiClient.delete(`/api/events/${id}`),
-  toggleEventAttendance: (eventId, userId) => 
-    apiClient.patch(`/api/events/${eventId}/attend`, { userId }),
 
-  // Attendance Logs
+  // Attendance
   getAttendance: () => apiClient.get('/api/attendance'),
-  getAttendance: () => api.get('/api/attendance'),
   recordAttendance: (checkInData) => apiClient.post('/api/attendance', checkInData),
 
   // Finances
@@ -46,8 +43,6 @@ export const api = {
   // Prayers
   getPrayers: () => apiClient.get('/api/prayers'),
   submitPrayer: (newEntry) => apiClient.post('/api/prayers', newEntry),
-  incrementPrayerCount: (id) => apiClient.patch(`/api/prayers/${id}/pray`),
-  markPrayerAnswered: (id) => apiClient.patch(`/api/prayers/${id}/answer`),
 };
 
 export default api;
