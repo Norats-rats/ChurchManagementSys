@@ -1,6 +1,4 @@
 import { useState } from 'react';
-
-
 const Signup = ({ onGoToLogin }) => {
   const [formData, setFormData] = useState({
     firstName: '',

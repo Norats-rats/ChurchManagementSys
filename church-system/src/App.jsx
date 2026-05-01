@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import api from './api'; // Added this import[cite: 7]
+import api from './api';
 import './App.css';
 import Signup from './components/shared/signup';
 import Dashboard from './roles/admin/dashboard';
@@ -12,7 +12,6 @@ const LoginScreen = ({ onLoginSuccess, onGoToSignup }) => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // Replaced local fetch with the api utility[cite: 7]
       const response = await api.login({ email, password }); 
       const data = response.data;
 
@@ -22,7 +21,6 @@ const LoginScreen = ({ onLoginSuccess, onGoToSignup }) => {
         alert(data.message || "Invalid credentials");
       }
     } catch (err) {
-      // Updated error message for better clarity[cite: 7]
       alert("Connection error. Ensure VITE_API_URL is set in Cloudflare and the backend is running.");
     }
   };
