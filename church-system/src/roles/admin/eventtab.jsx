@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import api from '../../api';
 
 const EventTab = ({ role, userId }) => {
   const [events, setEvents] = useState([]);
@@ -17,8 +18,8 @@ const EventTab = ({ role, userId }) => {
 
   const fetchEvents = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/events');
-      const data = await response.json();
+      const response = await api.getEvents(); 
+      const data = response.data;
       if (Array.isArray(data)) setEvents(data);
       setLoading(false);
     } catch (err) {
@@ -29,13 +30,8 @@ const EventTab = ({ role, userId }) => {
 
   const handleToggleAttendance = async (eventId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/events/${eventId}/attend`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId })
-      });
-
-      if (response.ok) {
+      const response = await api.toggleEventAttendance(eventId, userId);
+      if (response.status === 200 || response.status === 204) {
         fetchEvents();
       }
     } catch (err) {
@@ -45,23 +41,15 @@ const EventTab = ({ role, userId }) => {
 
   const handleCreateOrUpdate = async (e) => {
     e.preventDefault();
-    const url = editingId 
-      ? `http://localhost:5000/api/events/${editingId}` 
-      : 'http://localhost:5000/api/events';
-    const method = editingId ? 'PUT' : 'POST';
-
     try {
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-
-      if (response.ok) {
-        setEditingId(null);
-        setFormData({ title: '', category: 'Worship', date: '', time: '08:00 AM', room: 'Main Sanctuary', expected: 0, type: 'Once', role: '' });
-        fetchEvents();
+      if (editingId) {
+        await api.updateEvent(editingId, formData); 
+      } else {
+        await api.createEvent(formData); 
       }
+      setEditingId(null);
+      setFormData({ title: '', category: 'Worship', date: '', time: '08:00 AM', room: 'Main Sanctuary', expected: 0, type: 'Once', role: '' });
+      fetchEvents();
     } catch (err) {
       alert("Error saving event");
     }
@@ -70,7 +58,7 @@ const EventTab = ({ role, userId }) => {
   const deleteEvent = async (id) => {
     if (!window.confirm("Delete this event?")) return;
     try {
-      await fetch(`http://localhost:5000/api/events/${id}`, { method: 'DELETE' });
+      await api.deleteEvent(id); 
       fetchEvents();
     } catch (err) {
       alert("Error deleting event");
@@ -149,7 +137,7 @@ const EventTab = ({ role, userId }) => {
                   <span>📅 {event.date}</span>
                   <span>🕒 {event.time}</span>
                   <span>📍 {event.room}</span>
-                  <span style={{ fontWeight: 'bold', color: '#6366f1' }}>👥 Attending: {event.expected || 0}</span>
+                  <span style={{ fontWeight: 'bold', color: '#6366f1' }}>👥 Attending: {event.attendees?.length || 0}</span>
                 </div>
               </div>
 
