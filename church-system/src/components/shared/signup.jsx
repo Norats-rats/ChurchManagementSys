@@ -37,7 +37,11 @@ const Signup = ({ onGoToLogin }) => {
     e.preventDefault();
     try {
       // Note: Ensure verifyOtp is defined in your api.js file
-      const response = await api.verifyOtp({ email: formData.email, otp }); 
+const response = await api.verifyOtp({ 
+      email: formData.email.trim(), 
+      otp: otp.trim() 
+    });
+
       if (response.data.success) {
         alert("Account Verified!");
         onGoToLogin();
