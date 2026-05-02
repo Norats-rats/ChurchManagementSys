@@ -21,11 +21,12 @@ export const api = {
   deleteMember: (id) => apiClient.delete(`/api/members/${id}`),
 
   // Events
-getEvents: () => apiClient.get('/events'),
-getEvents: () => apiClient.get('/api/events'), 
+  getEvents: () => apiClient.get('/api/events'), 
   createEvent: (eventData) => apiClient.post('/api/events', eventData), 
   updateEvent: (id, eventData) => apiClient.put(`/api/events/${id}`, eventData), 
   deleteEvent: (id) => apiClient.delete(`/api/events/${id}`),
+  toggleEventAttendance: (eventId, userId) => 
+    apiClient.post(`/api/events/${eventId}/toggle-attendance`, { userId }),
 
   // Attendance
   getAttendance: () => apiClient.get('/api/attendance'),

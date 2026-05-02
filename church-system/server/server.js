@@ -225,6 +225,26 @@ app.post('/api/attendance', async (req, res) => {
   } catch (err) { res.status(500).json({ error: "Internal Server Error" }); }
 });
 
+app.post('/api/events/:id/toggle-attendance', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const event = await Event.findById(req.params.id);
+    
+    if (!event) return res.status(404).send("Event not found");
+
+    const index = event.attendees.indexOf(userId);
+    if (index === -1) {
+      event.attendees.push(userId);
+    } else {
+      event.attendees.splice(index, 1);
+    }
+    await event.save();
+    res.json(event);
+  } catch (err) {
+    res.status(500).send("Error toggling attendance: " + err.message);
+  }
+});
+
 app.get('/api/events', async (req, res) => {
   try {
     const events = await Event.find().sort({ createdAt: -1 });

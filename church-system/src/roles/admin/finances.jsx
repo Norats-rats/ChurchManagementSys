@@ -121,8 +121,8 @@ const handleAddIncome = async (e) => {
   return (
     <div style={styles.container}>
       <header style={{ marginBottom: '30px' }}>
-        <h2 style={{ margin: 0 }}>{role === 'Member' ? 'Donation Options' : 'Financial Records'}</h2>
-        <p style={{ color: '#64748b' }}>{role === 'Member' ? 'Support the church mission' : 'Tracking church financial health'}</p>
+        <h2 style={{ margin: 0, color: '#053476' }}>{role === 'Member' ? 'Donation Options' : 'Financial Records'}</h2>
+        <p style={{ color: '#053476' }}>{role === 'Member' ? 'Support the church mission' : 'Tracking church financial health'}</p>
       </header>
 
       {role !== 'Member' && (
