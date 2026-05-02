@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import api from '../../api'; // Using your centralized API utility
+import api from '../../api';
 
 const Finances = ({ role, userId }) => {
   const [transactions, setTransactions] = useState([]);
@@ -21,12 +21,11 @@ const Finances = ({ role, userId }) => {
 
   const fetchFinances = async () => {
     try {
-      const response = await api.getFinances(); 
+      const response = await api.getFinances();
       const data = response.data;
       
       let filteredTransactions = data.transactions || [];
       
-      // Filter logic to ensure users only see relevant records
       if (role === 'Staff') {
         filteredTransactions = filteredTransactions.filter(t => t.addedBy === userId && t.type === 'Income');
       } else if (role === 'Member') {
@@ -95,7 +94,7 @@ const Finances = ({ role, userId }) => {
     };
 
     try {
-      const res = await api.createFinanceRecord(transactionData);
+      const res = await api.addFinanceRecord(transactionData);
       if (res.status === 200 || res.status === 201) {
         setNewDesc("");
         setNewAmount("");
@@ -123,11 +122,10 @@ const Finances = ({ role, userId }) => {
   return (
     <div style={styles.container}>
       <header style={{ marginBottom: '30px' }}>
-        <h2 style={{ margin: 0 }}>{role === 'Member' ? 'Donations & Giving' : 'Financial Records'}</h2>
-        <p style={{ color: '#64748b' }}>{role === 'Member' ? 'Support the church mission' : 'Tracking church financial health'}</p>
+        <h2 style={{ margin: 0 }}>{role === 'Member' ? 'Donation Options' : 'Financial Records'}</h2>[cite: 3]
+        <p style={{ color: '#64748b' }}>{role === 'Member' ? 'Support the church mission' : 'Tracking church financial health'}</p>[cite: 3]
       </header>
 
-      {/* Stats Grid only visible to Staff/Admin/Leaders */}
       {role !== 'Member' && (
         <div style={styles.statsGrid}>
           <div style={styles.card}>
