@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const AttendanceTab = ({ role, userId, user }) => {
   const [checkIns, setCheckIns] = useState([]);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
@@ -18,23 +20,28 @@ const AttendanceTab = ({ role, userId, user }) => {
   const fetchInitialData = async () => {
     setLoading(true);
     try {
-      const attResponse = await fetch('http://localhost:5000/api/attendance');
+      const attResponse = await fetch(`${API_BASE}/api/attendance`);
       const attData = await attResponse.json();
-      setCheckIns(attData);
+      const validAttData = Array.isArray(attData) ? attData : [];
+      setCheckIns(validAttData);
 
-      const eventsResponse = await fetch('http://localhost:5000/api/events');
+      const eventsResponse = await fetch(`${API_BASE}/api/events`);
       const eventsData = await eventsResponse.json();
-      setUpcomingEvents(Array.isArray(eventsData) ? eventsData : []);
+      const validEventsData = Array.isArray(eventsData) ? eventsData : [];
+      
+      const sortedEvents = validEventsData.sort((a, b) => new Date(a.date) - new Date(b.date));
+      setUpcomingEvents(sortedEvents);
 
-      if (user && Array.isArray(attData)) {
+      if (user && validAttData.length > 0) {
         const today = new Date().toISOString().split('T')[0];
-        const alreadyPresent = attData.some(record => 
+        const alreadyPresent = validAttData.some(record => 
           String(record.userId) === String(userId) && record.date === today
         );
         setHasCheckedInToday(alreadyPresent);
       }
     } catch (err) {
       console.error("Initialization error:", err);
+      setStatusMessage("Could not connect to server.");
     } finally {
       setLoading(false);
     }
@@ -42,6 +49,8 @@ const AttendanceTab = ({ role, userId, user }) => {
 
   const formatDisplayTime = (timeString) => {
     if (!timeString) return "N/A";
+    if (timeString.includes('AM') || timeString.includes('PM')) return timeString;
+    
     if (timeString.includes(':')) {
       const [hours, minutes] = timeString.split(':');
       const date = new Date();
@@ -54,16 +63,11 @@ const AttendanceTab = ({ role, userId, user }) => {
   const todayStr = new Date().toISOString().split('T')[0];
   const todaysEvent = upcomingEvents.find(event => event.date === todayStr);
 
-  const getTodaysEventDetails = () => {
-    if (!todaysEvent) return null;
-    return {
-      title: todaysEvent.title,
-      time: formatDisplayTime(todaysEvent.time),
-      location: todaysEvent.location || 'Main Sanctuary'
-    };
-  };
-
-  const eventDetails = getTodaysEventDetails();
+  const eventDetails = todaysEvent ? {
+    title: todaysEvent.title,
+    time: formatDisplayTime(todaysEvent.time),
+    location: todaysEvent.room || 'Main Sanctuary'
+  } : null;
 
   const handleSelfCheckIn = async () => {
     if (!todaysEvent || isSubmitting || hasCheckedInToday) return;
@@ -82,12 +86,12 @@ const AttendanceTab = ({ role, userId, user }) => {
         userId: String(userId),
         name: user?.firstName ? `${user.firstName} ${user.lastName || ''}` : "Member",
         service: todaysEvent.title,
-        date: now.toISOString().split('T')[0],
+        date: todayStr,
         time: now.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' }),
         status: 'Present'
       };
 
-      const res = await fetch('http://localhost:5000/api/attendance', {
+      const res = await fetch(`${API_BASE}/api/attendance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(checkInData)
@@ -100,10 +104,10 @@ const AttendanceTab = ({ role, userId, user }) => {
       } else {
         const result = await res.json();
         setStatusMessage(result.error || "Failed to check in.");
-        setIsSubmitting(false);
       }
     } catch (err) {
       setStatusMessage("Server error. Check connection.");
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -158,7 +162,7 @@ const AttendanceTab = ({ role, userId, user }) => {
       <div style={styles.memberHero}>
         <div style={{ fontSize: '40px', marginBottom: '10px' }}>⛪</div>
         <h2 style={{ fontSize: '28px' }}>
-          {eventDetails ? `Today's Service: ${eventDetails.title}` : ""}
+          {eventDetails ? `Today's Service: ${eventDetails.title}` : "No Service Today"}
         </h2>
         
         {eventDetails && (
@@ -167,7 +171,7 @@ const AttendanceTab = ({ role, userId, user }) => {
           </div>
         )}
         
-        {!eventDetails && <p style={{ opacity: 0.9 }}>No events scheduled for today.</p>}
+        {!eventDetails && <p style={{ opacity: 0.9 }}>Check the schedule below for upcoming events.</p>}
 
         <button 
           onClick={handleSelfCheckIn} 
@@ -229,7 +233,10 @@ const AttendanceTab = ({ role, userId, user }) => {
       </div>
 
       <div style={styles.eventGrid}>
-        {upcomingEvents.filter(e => e.date >= todayStr).slice(0, 3).map(event => (
+        {upcomingEvents
+          .filter(e => e.date >= todayStr)
+          .slice(0, 3)
+          .map(event => (
           <div key={event._id} style={styles.eventCard}>
             <div style={{ fontSize: '12px', color: '#2563eb', fontWeight: 'bold', marginBottom: '8px' }}>
               {new Date(event.date).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
@@ -237,7 +244,7 @@ const AttendanceTab = ({ role, userId, user }) => {
               {formatDisplayTime(event.time)}
             </div>
             <h4 style={{ margin: '0 0 8px 0' }}>{event.title}</h4>
-            <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>📍 {event.location || 'Main Sanctuary'}</p>
+            <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>📍 {event.room || 'Main Sanctuary'}</p>
           </div>
         ))}
       </div>
