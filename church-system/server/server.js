@@ -255,7 +255,15 @@ app.post('/api/events', async (req, res) => {
     res.status(400).json({ error: "Failed to create event" });
   }
 });
-
+app.get('/api/events', async (req, res) => {
+  try {
+    const events = await Event.find().sort({ createdAt: -1 });
+    res.json(events);
+  } catch (err) {
+    console.error("Fetch Events Error:", err);
+    res.status(500).json({ error: "Failed to fetch events" });
+  }
+});
 app.put('/api/events/:id', async (req, res) => {
   try {
     const updatedEvent = await Event.findByIdAndUpdate(
