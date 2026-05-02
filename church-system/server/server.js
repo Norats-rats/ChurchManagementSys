@@ -161,19 +161,23 @@ app.post('/register', async (req, res) => {
 }
 });
 
-// Add to server_11.js
 app.post('/verify-otp', async (req, res) => {
   const { email, otp } = req.body;
-  const user = await Member.findOne({ email, otp });
+  try {
+    // We find the user by email AND otp
+    const user = await Member.findOne({ email: email.trim(), otp: otp.trim() });
 
-  if (user) {
-    user.status = 'Active';
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Invalid OTP code" });
+    }
+
     user.isVerified = true;
-    user.otp = null; // Clear it so it can't be used again
+    user.status = 'Active';
     await user.save();
-    res.json({ success: true, message: "Account activated!" });
-  } else {
-    res.status(400).json({ success: false, message: "Invalid code" });
+
+    res.json({ success: true, message: "Account verified successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
