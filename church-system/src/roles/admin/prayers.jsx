@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
-const PrayerRequests = ({ user, role }) => {
-  import api from '../../api';
+  const PrayerRequests = ({ user, role }) => {
   const [showModal, setShowModal] = useState(false);
   const [newRequestText, setNewRequestText] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]); 
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
-const API_BASE = import.meta.env.VITE_API_URL || "";
+  const API_BASE = import.meta.env.VITE_API_URL || "";
 
   const categories = ["Health", "Career", "Financial", "Family", "Testimony", "Ministry", "Relationships", "Travel"];
 
