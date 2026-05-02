@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-  const PrayerRequests = ({ user, role }) => {
+import api from '../../api';
+
+const PrayerRequests = ({ user, role }) => {
   const [showModal, setShowModal] = useState(false);
   const [newRequestText, setNewRequestText] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]); 
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const API_BASE = import.meta.env.VITE_API_URL || "";
 
   const categories = ["Health", "Career", "Financial", "Family", "Testimony", "Ministry", "Relationships", "Travel"];
 
@@ -16,8 +16,8 @@ import { useEffect, useState } from 'react';
 
   const fetchRequests = async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/prayers`);
-      const data = await response.json();
+      const response = await api.getPrayers();
+      const data = response.data;
       
       const formattedData = Array.isArray(data) ? data.map(item => ({
         ...item,
@@ -48,7 +48,6 @@ import { useEffect, useState } from 'react';
       return alert("Please provide a request and at least one category.");
     }
 
-    // Safely generate initials and username
     const userInitial = user?.firstName && user?.lastName 
       ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() 
       : "??";
@@ -66,12 +65,8 @@ import { useEffect, useState } from 'react';
     };
 
     try {
-      const response = await fetch(`${API_BASE}/api/prayers`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newEntry)
-      });
-      if (response.ok) {
+      const response = await api.submitPrayer(newEntry);
+      if (response.status === 201 || response.status === 200) {
         fetchRequests(); 
         setNewRequestText("");
         setSelectedCategories([]);
@@ -84,11 +79,8 @@ import { useEffect, useState } from 'react';
 
   const handlePraying = async (id) => {
     try {
-      const response = await fetch(`${API_BASE}/api/prayers/${id}/pray`, {
-        method: 'PATCH'
-      });
-      
-      if (response.ok) {
+      const response = await api.incrementPraying(id);
+      if (response.status === 200) {
         setRequests(requests.map(r => 
             r._id === id ? { ...r, praying: (r.praying || 0) + 1 } : r
         ));
@@ -100,12 +92,8 @@ import { useEffect, useState } from 'react';
 
   const handleMarkAnswered = async (id) => {
     try {
-      const response = await fetch(`${API_BASE}/api/prayers/${id}/answer`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      if (response.ok) {
+      const response = await api.markAnswered(id);
+      if (response.status === 200) {
         setRequests(prevRequests => 
           prevRequests.map(item => 
             item._id === id ? { ...item, status: "Answered" } : item
