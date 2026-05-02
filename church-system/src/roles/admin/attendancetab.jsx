@@ -17,31 +17,29 @@ const AttendanceTab = ({ role, userId, user }) => {
     fetchInitialData();
   }, [role, userId]);
 
-  const fetchInitialData = async () => {
+const fetchInitialData = async () => {
     setLoading(true);
     try {
-      const attResponse = await fetch(`${API_BASE}/api/attendance`);
-      const attData = await attResponse.json();
-      const validAttData = Array.isArray(attData) ? attData : [];
-      setCheckIns(validAttData);
+      const cleanBase = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
 
-      const eventsResponse = await fetch(`${API_BASE}/api/events`);
-      const eventsData = await eventsResponse.json();
-      const validEventsData = Array.isArray(eventsData) ? eventsData : [];
+      const attResponse = await fetch(`${cleanBase}/api/attendance`);
       
-      const sortedEvents = validEventsData.sort((a, b) => new Date(a.date) - new Date(b.date));
-      setUpcomingEvents(sortedEvents);
-
-      if (user && validAttData.length > 0) {
-        const today = new Date().toISOString().split('T')[0];
-        const alreadyPresent = validAttData.some(record => 
-          String(record.userId) === String(userId) && record.date === today
-        );
-        setHasCheckedInToday(alreadyPresent);
+      if (!attResponse.ok || !attResponse.headers.get("content-type")?.includes("application/json")) {
+        throw new Error("Server did not return JSON. Check backend routes.");
       }
+      
+      const attData = await attResponse.json();
+      setCheckIns(Array.isArray(attData) ? attData : []);
+
+      const eventsResponse = await fetch(`${cleanBase}/api/events`);
+      if (eventsResponse.ok && eventsResponse.headers.get("content-type")?.includes("application/json")) {
+        const eventsData = await eventsResponse.json();
+        setUpcomingEvents(Array.isArray(eventsData) ? eventsData : []);
+      }
+
     } catch (err) {
       console.error("Initialization error:", err);
-      setStatusMessage("Could not connect to server.");
+      setStatusMessage("Could not connect to server or invalid data received.");
     } finally {
       setLoading(false);
     }
