@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 
+const API_BASE_RAW = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE = API_BASE_RAW.endsWith('/') ? API_BASE_RAW.slice(0, -1) : API_BASE_RAW;
+
 const Ministries = ({ role }) => {
   const [ministryList, setMinistryList] = useState([]);
   const [leaderOptions, setLeaderOptions] = useState([]);
@@ -24,14 +27,18 @@ const Ministries = ({ role }) => {
   const fetchInitialData = async () => {
     setLoading(true);
     try {
-      const minRes = await fetch('http://localhost:5000/api/ministries');
+      const minRes = await fetch(`${API_BASE}/api/ministries`);
+      if (!minRes.ok) throw new Error("Failed to fetch ministries");
       const minData = await minRes.json();
-      setMinistryList(minData);
-      const userRes = await fetch('http://localhost:5000/api/members');
+      setMinistryList(Array.isArray(minData) ? minData : []);
+
+      const userRes = await fetch(`${API_BASE}/api/members`);
+      if (!userRes.ok) throw new Error("Failed to fetch members");
       const userData = await userRes.json();
-      const filteredLeaders = userData.filter(u => 
-        u.role === 'Ministry Leader' || u.role === 'Ministry'
-      );
+      
+      const filteredLeaders = Array.isArray(userData) 
+        ? userData.filter(u => u.role === 'Ministry Leader' || u.role === 'Ministry')
+        : [];
       setLeaderOptions(filteredLeaders);
 
     } catch (err) {
@@ -49,7 +56,7 @@ const Ministries = ({ role }) => {
         members: Number(formData.members)
       };
 
-      const res = await fetch('http://localhost:5000/api/ministries', {
+      const res = await fetch(`${API_BASE}/api/ministries`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(submissionData)
@@ -61,13 +68,13 @@ const Ministries = ({ role }) => {
         fetchInitialData();
       }
     } catch (err) { 
-      alert("Network error."); 
+      alert("Network error. Check your server connection."); 
     }
   };
 
   const handleUpdate = async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/ministries/${id}`, {
+      const res = await fetch(`${API_BASE}/api/ministries/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editFormData) 
@@ -82,10 +89,19 @@ const Ministries = ({ role }) => {
   const handleDelete = async (id) => {
     if (window.confirm("Permanently delete this ministry?")) {
       try {
-        const res = await fetch(`http://localhost:5000/api/ministries/${id}`, { method: 'DELETE' });
+        const res = await fetch(`${API_BASE}/api/ministries/${id}`, { method: 'DELETE' });
         if (res.ok) fetchInitialData();
       } catch (err) { alert("Delete failed"); }
     }
+  };
+
+  const formatTime = (timeStr) => {
+    if (!timeStr) return "TBD";
+    if (!timeStr.includes(':')) return timeStr;
+    const [h, m] = timeStr.split(':');
+    const date = new Date();
+    date.setHours(h, m);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
   };
 
   if (loading) return <div style={{padding: '40px'}}>Connecting to database...</div>;
@@ -156,7 +172,7 @@ const Ministries = ({ role }) => {
             {canManage && editingId === m._id ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <input style={inputStyle} value={editFormData.name} onChange={e => setEditFormData({...editFormData, name: e.target.value})} />
-                <input style={inputStyle} value={editFormData.schedule} onChange={e => setEditFormData({...editFormData, schedule: e.target.value})} />
+                <input type="time" style={inputStyle} value={editFormData.schedule} onChange={e => setEditFormData({...editFormData, schedule: e.target.value})} />
                 <select style={inputStyle} value={editFormData.status} onChange={e => setEditFormData({...editFormData, status: e.target.value})}>
                   <option value="Active">Active</option>
                   <option value="Deactive">Deactive</option>
@@ -175,7 +191,7 @@ const Ministries = ({ role }) => {
                 <p style={{ color: '#64748b', fontSize: '14px' }}>Led by {m.leader}</p>
                 <div style={cardFooter}>
                   <span>Members: <strong>{m.members}</strong></span>
-                  <span>{m.schedule}</span>
+                  <span>🕒 {formatTime(m.schedule)}</span>
                 </div>
                 {canManage && (
                   <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
