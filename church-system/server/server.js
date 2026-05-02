@@ -21,6 +21,37 @@ app.use(cors({
 // --- 2. DATABASE CONNECTION ---
 const mongoURI = process.env.MONGODB_URI; 
 
+const { Resend } = require('resend');
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+const sendOTPEmail = async (email, otp, firstName) => {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: `FBCF Church <${process.env.EMAIL_FROM}>`,
+      to: [email],
+      subject: 'Verify Your Church Account',
+      html: `
+        <div style="font-family: sans-serif; max-width: 500px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #1e40af;">Welcome, ${firstName}!</h2>
+          <p>Please use the code below to activate your account:</p>
+          <div style="background: #f3f4f6; padding: 15px; text-align: center; border-radius: 8px;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #2563eb;">${otp}</span>
+          </div>
+          <p style="font-size: 12px; color: #666; margin-top: 20px;">If you didn't create an account, you can safely ignore this email.</p>
+        </div>
+      `,
+    });
+
+    if (error) {
+      return console.error({ error });
+    }
+    console.log({ data });
+  } catch (err) {
+    console.error("Resend Error:", err);
+  }
+};
+
+
 mongoose.connect(mongoURI)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch(err => console.error("❌ MongoDB Connection Error:", err));
@@ -38,7 +69,11 @@ const Member = mongoose.model('members', new mongoose.Schema({
   ministry: { type: String, default: 'None' },
   role: { type: String, default: 'Member' },
   status: { type: String, default: 'Active' },
+  otp: { type: String }, // Add this
+  isVerified: { type: Boolean, default: false }, // Add this
+  status: { type: String, default: 'Inactive' }, // Default to Inactive
   date: { type: Date, default: Date.now }
+  
 }));
 
 const Event = mongoose.model('events', new mongoose.Schema({
@@ -101,11 +136,43 @@ app.post('/register', async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newMember = new Member({ firstName, lastName, email, password: hashedPassword });
+    
+    // Create random 6-digit OTP
+    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    const newMember = new Member({ 
+      firstName, 
+      lastName, 
+      email, 
+      password: hashedPassword,
+      otp: generatedOtp,
+      status: 'Inactive' 
+    });
+
     await newMember.save();
-    res.status(201).json({ message: "User created" });
+    
+    // Trigger the Resend email
+    await sendOTPEmail(email, generatedOtp, firstName);
+
+    res.status(201).json({ message: "Verification code sent!" });
   } catch (err) {
-    res.status(400).json({ error: "Email already exists" });
+    res.status(400).json({ error: "Registration failed. Email may already exist." });
+  }
+});
+
+// Add to server_11.js
+app.post('/verify-otp', async (req, res) => {
+  const { email, otp } = req.body;
+  const user = await Member.findOne({ email, otp });
+
+  if (user) {
+    user.status = 'Active';
+    user.isVerified = true;
+    user.otp = null; // Clear it so it can't be used again
+    await user.save();
+    res.json({ success: true, message: "Account activated!" });
+  } else {
+    res.status(400).json({ success: false, message: "Invalid code" });
   }
 });
 

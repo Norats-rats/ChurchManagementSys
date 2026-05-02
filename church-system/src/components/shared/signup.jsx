@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import api from '../../api';
 const Signup = ({ onGoToLogin }) => {
   const [formData, setFormData] = useState({
     firstName: '',
@@ -16,25 +17,17 @@ const Signup = ({ onGoToLogin }) => {
     });
   };
 
+// Change this:
 const handleSignup = async (e) => {
   e.preventDefault();
-  
   try {
-    const response = await fetch('http://localhost:5000/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData) 
-    });
-
-    if (response.ok) {
-      alert("Registration successful!");
-      onGoToLogin();
-    } else {
-      const errorData = await response.json();
-      alert(errorData.error);
+    const response = await api.register(formData); // Use your helper!
+    if (response.status === 201) {
+      alert("Verification code sent to your email!");
+      setStep('otp'); // Switch to OTP input view
     }
   } catch (err) {
-    console.error("Signup error:", err);
+    alert(err.response?.data?.error || "Signup failed");
   }
 };
 
