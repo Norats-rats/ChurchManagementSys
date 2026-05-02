@@ -83,14 +83,12 @@ const Finances = ({ role, userId }) => {
     }
   };
 
-  const handleAddIncome = async (e) => {
+const handleAddIncome = async (e) => {
     e.preventDefault();
     const transactionData = {
-      date: newDate,
       description: newDesc,
       type: 'Income',
       amount: parseFloat(newAmount),
-      addedBy: userId
     };
 
     try {
@@ -101,7 +99,8 @@ const Finances = ({ role, userId }) => {
         fetchFinances();
       }
     } catch (err) {
-      alert("Failed to record income");
+      console.error(err);
+      alert("Failed to record income. Check console for error.");
     }
   };
 
@@ -122,8 +121,8 @@ const Finances = ({ role, userId }) => {
   return (
     <div style={styles.container}>
       <header style={{ marginBottom: '30px' }}>
-        <h2 style={{ margin: 0 }}>{role === 'Member' ? 'Donation Options' : 'Financial Records'}</h2>[cite: 3]
-        <p style={{ color: '#64748b' }}>{role === 'Member' ? 'Support the church mission' : 'Tracking church financial health'}</p>[cite: 3]
+        <h2 style={{ margin: 0 }}>{role === 'Member' ? 'Donation Options' : 'Financial Records'}</h2>
+        <p style={{ color: '#64748b' }}>{role === 'Member' ? 'Support the church mission' : 'Tracking church financial health'}</p>
       </header>
 
       {role !== 'Member' && (

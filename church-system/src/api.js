@@ -22,9 +22,10 @@ export const api = {
 
   // Events
 getEvents: () => apiClient.get('/events'),
-  createEvent: (eventData) => apiClient.post('/events', eventData),
-  updateEvent: (id, eventData) => apiClient.put(`/events/${id}`), 
-  deleteEvent: (id) => apiClient.delete(`/events/${id}`),
+getEvents: () => apiClient.get('/api/events'), 
+  createEvent: (eventData) => apiClient.post('/api/events', eventData), 
+  updateEvent: (id, eventData) => apiClient.put(`/api/events/${id}`, eventData), 
+  deleteEvent: (id) => apiClient.delete(`/api/events/${id}`),
 
   // Attendance
   getAttendance: () => apiClient.get('/api/attendance'),
