@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-const API_BASE_RAW = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_RAW = import.meta.env.VITE_API_URL
 const API_BASE = API_BASE_RAW.endsWith('/') ? API_BASE_RAW.slice(0, -1) : API_BASE_RAW;
 
 const Ministries = ({ role }) => {
@@ -24,7 +24,12 @@ const Ministries = ({ role }) => {
     fetchInitialData();
   }, [role]);
 
-  const fetchInitialData = async () => {
+const fetchInitialData = async () => {
+  if (!API_BASE) {
+    console.error("API_URL is not defined in environment variables");
+    setLoading(false);
+    return;
+  }
     setLoading(true);
     try {
       const minRes = await fetch(`${API_BASE}/api/ministries`);
