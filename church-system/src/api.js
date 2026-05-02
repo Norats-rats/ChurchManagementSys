@@ -15,6 +15,8 @@ export const api = {
   login: (credentials) => apiClient.post('/login', credentials),
   register: (formData) => apiClient.post('/register', formData),
   verifyOtp: (data) => apiClient.post('/verify-otp', data),
+  forgotPassword: (data) => apiClient.post('/forgot-password', data),
+  resetPassword: (data) => apiClient.post('/reset-password', data),
 
   // Members
   getMembers: () => apiClient.get('/api/members'),

@@ -6,7 +6,6 @@ require('dotenv').config();
 
 const app = express();
 
-// --- 1. MIDDLEWARE ---
 app.use(express.json());
 
 app.use(cors({
@@ -18,7 +17,6 @@ app.use(cors({
   credentials: true
 }));
 
-// --- 2. DATABASE CONNECTION ---
 const mongoURI = process.env.MONGODB_URI; 
 
 const { Resend } = require('resend');
@@ -56,7 +54,6 @@ mongoose.connect(mongoURI)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch(err => console.error("❌ MongoDB Connection Error:", err));
 
-// --- 3. MODELS ---
 const Member = mongoose.model('members', new mongoose.Schema({
   firstName: String,
   lastName: String,
@@ -69,9 +66,9 @@ const Member = mongoose.model('members', new mongoose.Schema({
   ministry: { type: String, default: 'None' },
   role: { type: String, default: 'Member' },
   status: { type: String, default: 'Active' },
-  otp: { type: String }, // Add this
-  isVerified: { type: Boolean, default: false }, // Add this
-  status: { type: String, default: 'Inactive' }, // Default to Inactive
+  otp: { type: String },
+  isVerified: { type: Boolean, default: false },
+  status: { type: String, default: 'Inactive' },
   date: { type: Date, default: Date.now }
   
 }));
@@ -125,7 +122,6 @@ const Transaction = mongoose.model('transactions', new mongoose.Schema({
   amount: { type: Number, required: true }
 }, { timestamps: true }));
 
-// --- 4. ROUTES ---
 
 app.get('/', (req, res) => {
   res.send('Church Management API is Online and Running');
@@ -156,15 +152,14 @@ app.post('/register', async (req, res) => {
 
     res.status(201).json({ message: "Verification code sent!" });
 } catch (err) {
-    console.error("Detailed Register Error:", err); // Look at Railway Logs for this!
-    res.status(400).json({ error: err.message }); // This will show in your browser console
+    console.error("Detailed Register Error:", err);
+    res.status(400).json({ error: err.message });
 }
 });
 
 app.post('/verify-otp', async (req, res) => {
   const { email, otp } = req.body;
   try {
-    // We find the user by email AND otp
     const user = await Member.findOne({ email: email.trim(), otp: otp.trim() });
 
     if (!user) {
@@ -182,17 +177,56 @@ app.post('/verify-otp', async (req, res) => {
 });
 
 app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
   try {
-    const { email, password } = req.body;
     const user = await Member.findOne({ email });
-    if (user && await bcrypt.compare(password, user.password)) {
-      res.json({ success: true, role: user.role, user });
-    } else {
-      res.status(401).json({ success: false, message: "Invalid credentials" });
+
+    if (!user || user.password !== password) {
+      return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
-  } catch (err) {
-    res.status(500).json({ error: "Login error" });
+
+    // BLOCK LOGIN IF NOT ACTIVE
+    if (user.status === 'Deactivated' || !user.isVerified) {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Your account is deactivated or not yet verified." 
+      });
+    }
+
+    res.json({ success: true, role: user.role, user });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
+});
+
+app.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  const user = await Member.findOne({ email });
+  if (!user) return res.status(404).json({ message: "Email not found" });
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  user.otp = otp; // Save code to user record[cite: 9]
+  await user.save();
+
+  await resend.emails.send({
+    from: process.env.EMAIL_FROM, // Use your authorized Resend email
+    to: email, 
+    subject: 'Password Reset Code',
+    html: `<p>Your reset code is: <strong>${otp}</strong></p>`
+  });
+  res.json({ success: true });
+});
+
+app.post('/reset-password', async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  const user = await Member.findOne({ email, otp });
+
+  if (!user) return res.status(400).json({ message: "Invalid or expired code" });
+
+  user.password = newPassword;
+  user.otp = null; // Clear OTP[cite: 9]
+  await user.save();
+  res.json({ success: true });
 });
 
 // MINISTRY ROUTES

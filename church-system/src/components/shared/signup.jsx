@@ -2,7 +2,7 @@ import { useState } from 'react';
 import api from '../../api';
 
 const Signup = ({ onGoToLogin }) => {
-  const [step, setStep] = useState('register'); // 'register' or 'otp'
+  const [step, setStep] = useState('register');
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -23,10 +23,9 @@ const Signup = ({ onGoToLogin }) => {
   const handleSignup = async (e) => {
     e.preventDefault();
     try {
-      // Ensure you are using your api helper here
       const response = await api.register(formData);
       if (response.status === 201) {
-        setStep('otp'); // Switch to OTP screen
+        setStep('otp');
       }
     } catch (err) {
       alert(err.response?.data?.error || "Signup failed");
@@ -36,7 +35,6 @@ const Signup = ({ onGoToLogin }) => {
   const handleVerify = async (e) => {
     e.preventDefault();
     try {
-      // Note: Ensure verifyOtp is defined in your api.js file
 const response = await api.verifyOtp({ 
       email: formData.email.trim(), 
       otp: otp.trim() 
@@ -51,7 +49,6 @@ const response = await api.verifyOtp({
     }
   };
 
-  // --- VIEW 1: OTP VERIFICATION ---
   if (step === 'otp') {
     return (
       <div className="main-container">
@@ -77,8 +74,7 @@ const response = await api.verifyOtp({
       </div>
     );
   }
-
-  // --- VIEW 2: INITIAL REGISTRATION ---
+  
   return (
     <div className="main-container">
       <div className="header-section">
