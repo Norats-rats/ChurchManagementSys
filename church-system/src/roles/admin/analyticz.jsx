@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
+import api from '../../api';
 
 const Analytics = () => {
   const [loading, setLoading] = useState(true);
@@ -17,14 +18,14 @@ const Analytics = () => {
   const fetchLiveAnalytics = async () => {
     try {
       const [membersRes, ministriesRes, eventsRes] = await Promise.all([
-        fetch('http://localhost:5000/api/members'),
-        fetch('http://localhost:5000/api/ministries'),
-        fetch('http://localhost:5000/api/events')
+        api.getMembers(),
+        api.getMinistries(),
+        api.getEvents()
       ]);
 
-      const members = await membersRes.json();
-      const ministries = await ministriesRes.json();
-      const events = await eventsRes.json();
+      const members = membersRes.data || [];
+      const ministries = ministriesRes.data || [];
+      const events = eventsRes.data || [];
 
       const totalMinMembers = ministries.reduce((acc, m) => acc + (m.members || 0), 0);
       const distribution = ministries.slice(0, 4).map(m => ({
