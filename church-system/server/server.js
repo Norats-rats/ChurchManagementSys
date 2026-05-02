@@ -184,8 +184,6 @@ app.post('/login', async (req, res) => {
     if (!user || user.password !== password) {
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
-
-    // BLOCK LOGIN IF NOT ACTIVE
     if (user.status === 'Deactivated' || !user.isVerified) {
       return res.status(403).json({ 
         success: false, 
@@ -205,11 +203,11 @@ app.post('/forgot-password', async (req, res) => {
   if (!user) return res.status(404).json({ message: "Email not found" });
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  user.otp = otp; // Save code to user record[cite: 9]
+  user.otp = otp;
   await user.save();
 
   await resend.emails.send({
-    from: process.env.EMAIL_FROM, // Use your authorized Resend email
+    from: process.env.EMAIL_FROM,
     to: email, 
     subject: 'Password Reset Code',
     html: `<p>Your reset code is: <strong>${otp}</strong></p>`
@@ -224,7 +222,7 @@ app.post('/reset-password', async (req, res) => {
   if (!user) return res.status(400).json({ message: "Invalid or expired code" });
 
   user.password = newPassword;
-  user.otp = null; // Clear OTP[cite: 9]
+  user.otp = null;
   await user.save();
   res.json({ success: true });
 });

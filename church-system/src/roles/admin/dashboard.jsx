@@ -34,46 +34,49 @@ const Dashboard = ({ user, role: rawRole, onLogout }) => {
 
   const visibleTabs = navigationConfig.filter(tab => tab.roles.includes(role));
 
-  useEffect(() => {
-    fetchDailyVerse();
-    if (currentTab === 'dashboard') {
-      fetchDashboardStats();
-    }
-  }, [currentTab]);
+useEffect(() => {
+  fetchDailyVerse();
+}, []); 
 
-  const fetchDailyVerse = async () => {
-    try {
-      const bibleStructure = [
-        { name: "Genesis", chapters: 50 }, { name: "Exodus", chapters: 40 },
-        { name: "Psalms", chapters: 150 }, { name: "Proverbs", chapters: 31 },
-        { name: "Matthew", chapters: 28 }, { name: "John", chapters: 21 },
-        { name: "Romans", chapters: 16 }, { name: "Philippians", chapters: 4 }
-      ];
+useEffect(() => {
+  if (currentTab === 'dashboard') {
+    fetchDashboardStats();
+  }
+}, [currentTab]);
+const fetchDailyVerse = async () => {
+  try {
+    const bibleStructure = [
+      { name: "Genesis", chapters: 50 }, { name: "Exodus", chapters: 40 },
+      { name: "Psalms", chapters: 150 }, { name: "Proverbs", chapters: 31 },
+      { name: "Matthew", chapters: 28 }, { name: "John", chapters: 21 },
+      { name: "Romans", chapters: 16 }, { name: "Philippians", chapters: 4 }
+    ];
 
-      const randomBook = bibleStructure[Math.floor(Math.random() * bibleStructure.length)];
-      const randomChapter = Math.floor(Math.random() * randomBook.chapters) + 1;
+    const today = new Date();
+    const dateSeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+    const bookIndex = dateSeed % bibleStructure.length;
+    const selectedBook = bibleStructure[bookIndex];
+    const chapterIndex = (dateSeed % selectedBook.chapters) + 1;
+    const response = await fetch(`https://bible-api.com/${selectedBook.name}+${chapterIndex}`);
+    const data = await response.json();
 
-      const response = await fetch(`https://bible-api.com/${randomBook.name}+${randomChapter}`);
-      const data = await response.json();
+    if (data.verses && data.verses.length > 0) {
+      const verseIndex = dateSeed % data.verses.length;
+      const selectedVerse = data.verses[verseIndex];
 
-      if (data.verses && data.verses.length > 0) {
-        const randomVerseIndex = Math.floor(Math.random() * data.verses.length);
-        const selectedVerse = data.verses[randomVerseIndex];
-
-        setDailyVerse({
-          text: selectedVerse.text,
-          reference: `${selectedVerse.book_name} ${selectedVerse.chapter}:${selectedVerse.verse}`
-        });
-      }
-    } catch (err) {
-      console.error("Bible API error:", err);
-      setDailyVerse({ 
-        text: "For God so loved the world, that he gave his only begotten Son.", 
-        reference: "John 3:16" 
+      setDailyVerse({
+        text: selectedVerse.text,
+        reference: `${selectedVerse.book_name} ${selectedVerse.chapter}:${selectedVerse.verse}`
       });
     }
-  };
-
+  } catch (err) {
+    console.error("Bible API error:", err);
+    setDailyVerse({ 
+      text: "For God so loved the world, that he gave his only begotten Son.", 
+      reference: "John 3:16" 
+    });
+  }
+};
   const fetchDashboardStats = async () => {
     setLoadingStats(true);
     try {
