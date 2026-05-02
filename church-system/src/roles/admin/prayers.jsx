@@ -153,7 +153,7 @@ const PrayerRequests = ({ user, role }) => {
       {showModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalContent}>
-            <h2 style={{ marginTop: 0, marginBottom: '25px' }}>New Prayer Request</h2>
+            <h2 style={{ marginTop: 0, marginBottom: '25px', color: '#1e293b' }}>New Prayer Request</h2>
             <form onSubmit={handleSubmit}>
               <textarea 
                 style={{ ...styles.darkInput, height: '120px', resize: 'none' }} 
