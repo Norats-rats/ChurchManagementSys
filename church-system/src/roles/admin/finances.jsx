@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import api from '../../api'; // Integrated centralized API utility
+import api from '../../api'; // Using your centralized API utility
 
 const Finances = ({ role, userId }) => {
   const [transactions, setTransactions] = useState([]);
@@ -21,12 +21,12 @@ const Finances = ({ role, userId }) => {
 
   const fetchFinances = async () => {
     try {
-      const response = await api.getFinances(); // Use api utility
+      const response = await api.getFinances(); 
       const data = response.data;
       
       let filteredTransactions = data.transactions || [];
       
-      // Filter logic to ensure users only see their own history
+      // Filter logic to ensure users only see relevant records
       if (role === 'Staff') {
         filteredTransactions = filteredTransactions.filter(t => t.addedBy === userId && t.type === 'Income');
       } else if (role === 'Member') {
@@ -34,15 +34,7 @@ const Finances = ({ role, userId }) => {
       }
 
       setTransactions(filteredTransactions);
-      
-      // Calculate personal total for the member to replace the global tracker
-      const personalTotal = filteredTransactions.reduce((acc, curr) => acc + curr.amount, 0);
-      
-      setStats({
-        ...data.stats,
-        personalTotal: personalTotal
-      });
-      
+      setStats(data.stats || { totalIncome: 0, totalExpenses: 0, netBalance: 0 });
       setLoading(false);
     } catch (err) {
       console.error("Error fetching finances:", err);
@@ -103,7 +95,7 @@ const Finances = ({ role, userId }) => {
     };
 
     try {
-      const res = await api.createFinanceRecord(transactionData); 
+      const res = await api.createFinanceRecord(transactionData);
       if (res.status === 200 || res.status === 201) {
         setNewDesc("");
         setNewAmount("");
@@ -135,26 +127,22 @@ const Finances = ({ role, userId }) => {
         <p style={{ color: '#64748b' }}>{role === 'Member' ? 'Support the church mission' : 'Tracking church financial health'}</p>
       </header>
 
-      <div style={styles.statsGrid}>
-        <div style={styles.card}>
-          <span style={styles.label}>
-            {role === 'Member' ? 'Your Total Giving' : 'Total Church Income'}
-          </span>
-          <div style={{ ...styles.amount, color: '#059669' }}>
-            ₱{(role === 'Member' ? stats.personalTotal : stats.totalIncome).toLocaleString()}
-          </div>
-        </div>
-        
-        {/* Only Admin/Leaders see the global Net Balance */}
-        {(role === 'Admin' || role === 'Ministry Leader') && (
+      {/* Stats Grid only visible to Staff/Admin/Leaders */}
+      {role !== 'Member' && (
+        <div style={styles.statsGrid}>
           <div style={styles.card}>
-            <span style={styles.label}>Net Balance</span>
-            <div style={styles.amount}>₱{stats.netBalance.toLocaleString()}</div>
+            <span style={styles.label}>Total Church Income</span>
+            <div style={{ ...styles.amount, color: '#059669' }}>₱{stats.totalIncome.toLocaleString()}</div>
           </div>
-        )}
-      </div>
+          {(role === 'Admin' || role === 'Ministry Leader') && (
+            <div style={styles.card}>
+              <span style={styles.label}>Net Balance</span>
+              <div style={styles.amount}>₱{stats.netBalance.toLocaleString()}</div>
+            </div>
+          )}
+        </div>
+      )}
 
-      {/* Re-enabled Giving Options for Members */}
       {role === 'Member' && (
         <div style={styles.donationGrid}>
           <div 
@@ -165,7 +153,7 @@ const Finances = ({ role, userId }) => {
             <h3 style={{ margin: '15px 0 5px' }}>E-Wallet / GCash</h3>
             <p style={{ fontSize: '12px', color: '#64748b' }}>Secure payment via PayMongo</p>
           </div>
-          <div style={styles.actionCard} onClick={() => alert("Bank: BPI\nAccount: 1234-5678-90\nName: Free Believers Fellowship")}>
+          <div style={styles.actionCard} onClick={() => alert("Bank: BPI\nAccount: [Insert Account]\nName: Free Believers Fellowship")}>
             <div style={{ fontSize: '32px' }}>🏦</div>
             <h3 style={{ margin: '15px 0 5px' }}>Bank Transfer</h3>
             <p style={{ fontSize: '12px', color: '#64748b' }}>Direct deposit details</p>
