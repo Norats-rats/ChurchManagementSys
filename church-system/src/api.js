@@ -9,10 +9,12 @@ const apiClient = axios.create({
   },
 });
 
+verifyOtp: (data) => apiClient.post('/verify-otp', data)
 export const api = {
   // Authentication
   login: (credentials) => apiClient.post('/login', credentials),
   register: (formData) => apiClient.post('/register', formData),
+  
 
   // Members
   getMembers: () => apiClient.get('/api/members'),
