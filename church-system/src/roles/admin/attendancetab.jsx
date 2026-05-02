@@ -67,48 +67,44 @@ const fetchInitialData = async () => {
     location: todaysEvent.room || 'Main Sanctuary'
   } : null;
 
-  const handleSelfCheckIn = async () => {
-    if (!todaysEvent || isSubmitting || hasCheckedInToday) return;
+const handleSelfCheckIn = async () => {
+  if (!todaysEvent || isSubmitting || hasCheckedInToday) return;
 
-    if (!userId) {
-      setStatusMessage("Session error. Please re-login.");
-      return;
+  setIsSubmitting(true);
+  setStatusMessage("");
+
+  try {
+    const cleanBase = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
+    
+    const now = new Date();
+    const checkInData = {
+      userId: String(userId),
+      name: user?.firstName ? `${user.firstName} ${user.lastName || ''}` : "Member",
+      service: todaysEvent.title,
+      date: todayStr,
+      time: now.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' }),
+      status: 'Present'
+    };
+    const res = await fetch(`${cleanBase}/api/attendance`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(checkInData)
+    });
+    if (res.ok) {
+      setHasCheckedInToday(true);
+      setStatusMessage("Attendance recorded successfully!");
+      await fetchInitialData();
+    } else {
+      const result = await res.json();
+      setStatusMessage(result.error || "Failed to check in.");
     }
-
-    setIsSubmitting(true);
-    setStatusMessage("");
-
-    try {
-      const now = new Date();
-      const checkInData = {
-        userId: String(userId),
-        name: user?.firstName ? `${user.firstName} ${user.lastName || ''}` : "Member",
-        service: todaysEvent.title,
-        date: todayStr,
-        time: now.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' }),
-        status: 'Present'
-      };
-
-      const res = await fetch(`${API_BASE}/api/attendance`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(checkInData)
-      });
-
-      if (res.ok) {
-        setHasCheckedInToday(true);
-        setStatusMessage("Attendance recorded successfully!");
-        await fetchInitialData();
-      } else {
-        const result = await res.json();
-        setStatusMessage(result.error || "Failed to check in.");
-      }
-    } catch (err) {
-      setStatusMessage("Server error. Check connection.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  } catch (err) {
+    console.error("Check-in error:", err);
+    setStatusMessage("Server error. Check connection.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const exportToExcel = () => {
     const worksheetData = checkIns.map(item => ({
