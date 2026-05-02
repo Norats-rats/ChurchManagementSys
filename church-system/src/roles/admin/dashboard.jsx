@@ -155,16 +155,6 @@ const Dashboard = ({ user, role: rawRole, onLogout }) => {
                 )}
                 
                 <StatCard label="Live Attendance" value={stats.attendanceCount} icon="📋" color="green" />
-
-                {(role === 'Admin' || role === 'Member' || role === 'Staff') && (
-                  <StatCard 
-                    label={role === 'Member' ? "My Donations" : "Total Giving"} 
-                    value={`₱${stats.monthlyContributions.toLocaleString()}`} 
-                    icon="₱" 
-                    color="purple" 
-                  />
-                )}
-
                 <StatCard label="Scheduled Events" value={stats.upcomingEventsCount} icon="📅" color="orange" />
               </div>
 
