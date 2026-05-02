@@ -45,6 +45,8 @@ export const api = {
   // Prayers
   getPrayers: () => apiClient.get('/api/prayers'),
   submitPrayer: (newEntry) => apiClient.post('/api/prayers', newEntry),
+  incrementPraying: (id) => apiClient.patch(`/api/prayers/${id}/pray`),
+  markAnswered: (id) => apiClient.patch(`/api/prayers/${id}/answer`),
 };
 
 export default api;

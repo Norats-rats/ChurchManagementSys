@@ -7,6 +7,9 @@ const PrayerRequests = ({ user, role }) => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Use environment variable for Railway deployment; fallback to localhost for development
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
   const categories = ["Health", "Career", "Financial", "Family", "Testimony", "Ministry", "Relationships", "Travel"];
 
   useEffect(() => {
@@ -15,13 +18,13 @@ const PrayerRequests = ({ user, role }) => {
 
   const fetchRequests = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/prayers');
+      const response = await fetch(`${API_BASE}/api/prayers`);
       const data = await response.json();
       
-      const formattedData = data.map(item => ({
+      const formattedData = Array.isArray(data) ? data.map(item => ({
         ...item,
         praying: item.prayingCount || 0 
-      }));
+      })) : [];
 
       setRequests(formattedData);
       setLoading(false);
@@ -47,14 +50,17 @@ const PrayerRequests = ({ user, role }) => {
       return alert("Please provide a request and at least one category.");
     }
 
-    const userInitial = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : "??";
-    const userName = user ? `${user.firstName} ${user.lastName}` : "Anonymous";
+    // Safely generate initials and username
+    const userInitial = user?.firstName && user?.lastName 
+      ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() 
+      : "??";
+    const userName = user?.firstName ? `${user.firstName} ${user.lastName}` : "Anonymous";
 
     const newEntry = {
       name: userName, 
       initial: userInitial,
       text: newRequestText,
-      userId: user._id || user.id, 
+      userId: user?._id || user?.id, 
       tags: selectedCategories, 
       status: "Active",
       prayingCount: 0, 
@@ -62,7 +68,7 @@ const PrayerRequests = ({ user, role }) => {
     };
 
     try {
-      const response = await fetch('http://localhost:5000/api/prayers', {
+      const response = await fetch(`${API_BASE}/api/prayers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newEntry)
@@ -80,7 +86,7 @@ const PrayerRequests = ({ user, role }) => {
 
   const handlePraying = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/prayers/${id}/pray`, {
+      const response = await fetch(`${API_BASE}/api/prayers/${id}/pray`, {
         method: 'PATCH'
       });
       
@@ -96,7 +102,7 @@ const PrayerRequests = ({ user, role }) => {
 
   const handleMarkAnswered = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/prayers/${id}/answer`, {
+      const response = await fetch(`${API_BASE}/api/prayers/${id}/answer`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' }
       });
