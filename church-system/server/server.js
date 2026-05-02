@@ -155,9 +155,10 @@ app.post('/register', async (req, res) => {
     await sendOTPEmail(email, generatedOtp, firstName);
 
     res.status(201).json({ message: "Verification code sent!" });
-  } catch (err) {
-    res.status(400).json({ error: "Registration failed. Email may already exist." });
-  }
+} catch (err) {
+    console.error("Detailed Register Error:", err); // Look at Railway Logs for this!
+    res.status(400).json({ error: err.message }); // This will show in your browser console
+}
 });
 
 // Add to server_11.js
