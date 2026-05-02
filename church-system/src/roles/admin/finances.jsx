@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import api from '../../api'; // Integrated centralized API utility
 
 const Finances = ({ role, userId }) => {
   const [transactions, setTransactions] = useState([]);
@@ -20,11 +21,12 @@ const Finances = ({ role, userId }) => {
 
   const fetchFinances = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/finances');
-      const data = await response.json();
+      const response = await api.getFinances(); // Use api utility
+      const data = response.data;
       
       let filteredTransactions = data.transactions || [];
       
+      // Filter logic to ensure users only see their own history
       if (role === 'Staff') {
         filteredTransactions = filteredTransactions.filter(t => t.addedBy === userId && t.type === 'Income');
       } else if (role === 'Member') {
@@ -32,7 +34,15 @@ const Finances = ({ role, userId }) => {
       }
 
       setTransactions(filteredTransactions);
-      setStats(data.stats || { totalIncome: 0, totalExpenses: 0, netBalance: 0 });
+      
+      // Calculate personal total for the member to replace the global tracker
+      const personalTotal = filteredTransactions.reduce((acc, curr) => acc + curr.amount, 0);
+      
+      setStats({
+        ...data.stats,
+        personalTotal: personalTotal
+      });
+      
       setLoading(false);
     } catch (err) {
       console.error("Error fetching finances:", err);
@@ -56,15 +66,13 @@ const Finances = ({ role, userId }) => {
               show_description: true,
               show_line_items: true,
               description: description,
-              line_items: [
-                {
-                  currency: 'PHP',
-                  amount: amount * 100,
-                  description: description,
-                  name: 'Church Donation',
-                  quantity: 1
-                }
-              ],
+              line_items: [{
+                currency: 'PHP',
+                amount: amount * 100,
+                description: description,
+                name: 'Church Donation',
+                quantity: 1
+              }],
               payment_method_types: ['gcash', 'paymaya', 'grab_pay', 'card'],
               success_url: window.location.href,
               cancel_url: window.location.href
@@ -95,12 +103,8 @@ const Finances = ({ role, userId }) => {
     };
 
     try {
-      const res = await fetch('http://localhost:5000/api/finances', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(transactionData)
-      });
-      if (res.ok) {
+      const res = await api.createFinanceRecord(transactionData); 
+      if (res.status === 200 || res.status === 201) {
         setNewDesc("");
         setNewAmount("");
         fetchFinances();
@@ -133,9 +137,15 @@ const Finances = ({ role, userId }) => {
 
       <div style={styles.statsGrid}>
         <div style={styles.card}>
-          <span style={styles.label}>{role === 'Member' ? 'Your Lifetime Giving' : 'Total Church Income'}</span>
-          <div style={{ ...styles.amount, color: '#059669' }}>₱{stats.totalIncome.toLocaleString()}</div>
+          <span style={styles.label}>
+            {role === 'Member' ? 'Your Total Giving' : 'Total Church Income'}
+          </span>
+          <div style={{ ...styles.amount, color: '#059669' }}>
+            ₱{(role === 'Member' ? stats.personalTotal : stats.totalIncome).toLocaleString()}
+          </div>
         </div>
+        
+        {/* Only Admin/Leaders see the global Net Balance */}
         {(role === 'Admin' || role === 'Ministry Leader') && (
           <div style={styles.card}>
             <span style={styles.label}>Net Balance</span>
@@ -144,6 +154,7 @@ const Finances = ({ role, userId }) => {
         )}
       </div>
 
+      {/* Re-enabled Giving Options for Members */}
       {role === 'Member' && (
         <div style={styles.donationGrid}>
           <div 
@@ -154,10 +165,10 @@ const Finances = ({ role, userId }) => {
             <h3 style={{ margin: '15px 0 5px' }}>E-Wallet / GCash</h3>
             <p style={{ fontSize: '12px', color: '#64748b' }}>Secure payment via PayMongo</p>
           </div>
-          <div style={styles.actionCard} onClick={() => alert("Bank: BPI\nAccount: CHANGE ME TO REAL I AM TEMPORARY\nName: Free Believers Fellowship")}>
+          <div style={styles.actionCard} onClick={() => alert("Bank: BPI\nAccount: 1234-5678-90\nName: Free Believers Fellowship")}>
             <div style={{ fontSize: '32px' }}>🏦</div>
             <h3 style={{ margin: '15px 0 5px' }}>Bank Transfer</h3>
-            <p style={{ fontSize: '12px', color: '#64748b' }}>Direct deposit (No Account Required)</p>
+            <p style={{ fontSize: '12px', color: '#64748b' }}>Direct deposit details</p>
           </div>
         </div>
       )}

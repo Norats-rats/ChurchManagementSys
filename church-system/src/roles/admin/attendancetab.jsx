@@ -158,7 +158,7 @@ const AttendanceTab = ({ role, userId, user }) => {
       <div style={styles.memberHero}>
         <div style={{ fontSize: '40px', marginBottom: '10px' }}>⛪</div>
         <h2 style={{ fontSize: '28px' }}>
-          {eventDetails ? `Today's Service: ${eventDetails.title}` : "Welcome to Church"}
+          {eventDetails ? `Today's Service: ${eventDetails.title}` : ""}
         </h2>
         
         {eventDetails && (
