@@ -290,13 +290,21 @@ app.delete('/api/events/:id', async (req, res) => {
 });
 
 // PRAYER ROUTES
-app.get('/api/prayers', async (req, res) => {
+app.get('/api/prayers', async (req, res) => { 
   try {
     const prayers = await Prayer.find().sort({ date: -1 });
     res.json(prayers);
   } catch (err) { res.status(500).json({ error: "Error" }); }
 });
 
+app.post('/api/prayers', async (req, res) => {
+  try {
+    const { name, initial, text, userId, tags } = req.body;
+    const newPrayer = new Prayer({ name, initial, text, userId, tags });
+    await newPrayer.save();
+    res.status(201).json(newPrayer);
+  } catch (err) { res.status(400).json({ error: "Error" }); }
+});
 app.patch('/api/prayers/:id/pray', async (req, res) => {
   try {
     const updated = await Prayer.findByIdAndUpdate(
@@ -305,9 +313,7 @@ app.patch('/api/prayers/:id/pray', async (req, res) => {
       { new: true }
     );
     res.json(updated);
-  } catch (err) {
-    res.status(400).json({ error: "Failed to update count" });
-  }
+  } catch (err) { res.status(400).json({ error: "Failed" }); }
 });
 
 app.patch('/api/prayers/:id/answer', async (req, res) => {
@@ -318,21 +324,9 @@ app.patch('/api/prayers/:id/answer', async (req, res) => {
       { new: true }
     );
     res.json(updated);
-  } catch (err) {
-    res.status(400).json({ error: "Failed to update status" });
-  }
+  } catch (err) { res.status(400).json({ error: "Failed" }); }
 });
 
-
-app.post('/api/prayers', async (req, res) => {
-  try {
-    const { name, text, tags } = req.body;
-    const initial = name ? name.split(' ').map(n => n[0]).join('') : "U";
-    const newPrayer = new Prayer({ name, initial, text, tags });
-    await newPrayer.save();
-    res.status(201).json(newPrayer);
-  } catch (err) { res.status(400).json({ error: "Error" }); }
-});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
