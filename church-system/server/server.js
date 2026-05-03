@@ -132,10 +132,7 @@ app.post('/register', async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
-    
-    // Create random 6-digit OTP
     const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    
     const newMember = new Member({ 
       firstName, 
       lastName, 
@@ -146,8 +143,6 @@ app.post('/register', async (req, res) => {
     });
 
     await newMember.save();
-    
-    // Trigger the Resend email
     await sendOTPEmail(email, generatedOtp, firstName);
 
     res.status(201).json({ message: "Verification code sent!" });
@@ -217,14 +212,17 @@ app.post('/forgot-password', async (req, res) => {
 
 app.post('/reset-password', async (req, res) => {
   const { email, otp, newPassword } = req.body;
-  const user = await Member.findOne({ email, otp });
-
-  if (!user) return res.status(400).json({ message: "Invalid or expired code" });
-
-  user.password = newPassword;
-  user.otp = null;
-  await user.save();
-  res.json({ success: true });
+  try {
+    const user = await Member.findOne({ email, otp });
+    if (!user) return res.status(400).json({ message: "Invalid or expired code" });
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedNewPassword;
+    user.otp = null;
+    await user.save();
+    res.json({ success: true, message: "Password updated successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 // MINISTRY ROUTES
