@@ -22,7 +22,7 @@ const Analytics = () => {
 
   const generateAIAnalysis = async (stats) => {
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
       
       const prompt = `Analyze this church management data:
       - Total Members: ${stats.totalMembers}
