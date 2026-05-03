@@ -11,6 +11,7 @@ app.use(express.json());
 app.use(cors({
   origin: [
     process.env.FRONTEND_URL,
+    process.env.MOBILE_URL,
     "https://churchmanagementsys.pages.dev",
     "http://localhost:5173",
     "https://church-management-app.lancemanemail.workers.dev"
