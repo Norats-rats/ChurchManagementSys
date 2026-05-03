@@ -175,8 +175,11 @@ app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await Member.findOne({ email });
-
-    if (!user || user.password !== password) {
+    if (!user) {
+      return res.status(401).json({ success: false, message: "Invalid credentials" });
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
     if (user.status === 'Deactivated' || !user.isVerified) {
@@ -185,7 +188,6 @@ app.post('/login', async (req, res) => {
         message: "Your account is deactivated or not yet verified." 
       });
     }
-
     res.json({ success: true, role: user.role, user });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
