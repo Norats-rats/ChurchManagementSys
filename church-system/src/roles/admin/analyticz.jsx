@@ -21,7 +21,14 @@ const generateAIAnalysis = async (stats) => {
     try {
       const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
       const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-      
+
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+      console.log("DEBUG: API Key exists?", !!apiKey);
+      if (!apiKey) {
+    setAiInsight("Error: API Key is missing from environment.");
+    return;
+  }
       const prompt = `Analyze this church management data:
       - Total Members: ${stats.totalMembers}
       - Active Ministries: ${stats.activeMinistries}
