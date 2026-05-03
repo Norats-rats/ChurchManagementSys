@@ -1,10 +1,9 @@
-import { GoogleGenerativeAI } from "@google/generative-ai"; // Ensure you run: npm install @google/generative-ai
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
 import api from '../../api';
 
-// Accessing the API Key from .env (using Vite syntax)
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY; 
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 const Analytics = () => {
@@ -67,8 +66,7 @@ const Analytics = () => {
       };
 
       setDbStats(newStats);
-      
-      // Trigger AI Analysis after stats are set[cite: 6]
+    
       await generateAIAnalysis(newStats);
       
       setLoading(false);
@@ -124,7 +122,6 @@ const Analytics = () => {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '25px' }}>
-        {/* Main Chart Card */}
         <div style={styles.card}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <h3 style={{ margin: 0 }}>Attendance Overview</h3>
@@ -146,7 +143,6 @@ const Analytics = () => {
           </div>
         </div>
 
-        {/* AI INSIGHT CARD[cite: 5] */}
         <div style={styles.aiCard}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
             <span style={{ fontSize: '20px' }}>✨</span>
