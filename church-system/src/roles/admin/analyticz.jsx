@@ -3,9 +3,6 @@ import { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
 import api from '../../api';
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const genAI = new GoogleGenerativeAI(API_KEY);
-
 const Analytics = () => {
   const [loading, setLoading] = useState(true);
   const [aiInsight, setAiInsight] = useState("Generating system insights...");
@@ -22,7 +19,9 @@ const Analytics = () => {
 
   const generateAIAnalysis = async (stats) => {
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
       
       const prompt = `Analyze this church management data:
       - Total Members: ${stats.totalMembers}
@@ -66,7 +65,6 @@ const Analytics = () => {
       };
 
       setDbStats(newStats);
-    
       await generateAIAnalysis(newStats);
       
       setLoading(false);
@@ -96,7 +94,7 @@ const Analytics = () => {
     barWrapper: { display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 },
     bar: (height, active) => ({
       width: '40px',
-      height: `${height}%`,
+      height: `${(height / 10) * 100}%`,
       background: active ? 'linear-gradient(180deg, #3b82f6 0%, #93c5fd 100%)' : '#e2e8f0',
       borderRadius: '6px 6px 0 0',
       transition: 'height 0.5s ease',
@@ -129,9 +127,9 @@ const Analytics = () => {
           </div>
           <div style={styles.chartContainer}>
             {[
-              { month: "Prev", value: 65, label: "Calculated" },
-              { month: "Current", value: 95, label: dbStats.totalMembers }, 
-              { month: "Forecast", value: 80, label: "AI Projected" }
+              { month: "Prev", value: 6.5, label: "Calculated" },
+              { month: "Current", value: dbStats.totalMembers, label: dbStats.totalMembers }, 
+              { month: "Forecast", value: 8, label: "AI Projected" }
             ].map((item, i) => (
               <div key={i} style={styles.barWrapper}>
                 <div style={styles.bar(item.value, item.month === "Current")}>
