@@ -147,7 +147,6 @@ const Analytics = () => {
             "{aiInsight}"
           </p>
           <div style={{ marginTop: '20px', fontSize: '11px', color: '#94a3b8', letterSpacing: '1px' }}>
-            STATUS: SECURE LOCAL PROCESSING
           </div>
         </div>
       </div>
