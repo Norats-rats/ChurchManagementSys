@@ -123,11 +123,17 @@ const handleCreateOrUpdate = async (e) => {
                 value={formData.titleSelection} 
                 onChange={e => setFormData({...formData, titleSelection: e.target.value})}
               >
-                <option value="Worship Service">Worship Service</option>
-                <option value="Ministry Meeting">Ministry Meeting</option>
-                <option value="Youth Activity">Youth Activity</option>
-                <option value="Community Outreach">Community Outreach</option>
-                <option value="Facility Booking">Facility Booking</option>
+                <option value="Jail Preaching">Jail Preaching </option>
+                <option value="Wedding">Wedding</option>
+                <option value="Dedication">Dedication</option>
+                <option value="Anniversary">Anniversary</option>
+                <option value="Healing Crusade ">Healing Crusade </option>
+                <option value="Feeding Program">Feeding Program </option>
+                <option value="Baptism">Baptism</option>
+                <option value="Bible Study">Bible Study</option>
+                <option value="Prayer Meeting ">Prayer Meeting </option>
+                <option value="Youth Camp">Youth Camp </option>
+
               </select>
 
               <input 
