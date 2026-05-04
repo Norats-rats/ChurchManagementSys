@@ -19,6 +19,7 @@ export const api = {
 
   // Scheduling Integration (Cronofy)
   getCronofyToken: () => apiClient.post('/api/get-cronofy-token'),
+  
 
   // Members
   getMembers: () => apiClient.get('/api/members'),
