@@ -156,54 +156,7 @@ app.post('/register', async (req, res) => {
 }
 });
 
-app.post('/api/get-cronofy-token', async (req, res) => {
-  const response = await fetch('https://api.cronofy.com/v1/element_tokens', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.CRONOFY_ACCESS_TOKEN}`
-    },
-    body: JSON.stringify({
-      version: "1",
-      permissions: ["agenda", "availability"],
-      subsidiary_allowed: true
-    })
-  });
-  const data = await response.json();
-  res.json(data);
-});
 
-app.post('/api/get-cronofy-token', async (req, res) => {
-  try {
-    const response = await fetch('https://api.cronofy.com/v1/element_tokens', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        version: "1",
-        permissions: ["agenda", "availability"],
-        client_id: process.env.CRONOFY_CLIENT_ID,
-        client_secret: process.env.CRONOFY_CLIENT_SECRET,
-        subsidiary_allowed: true
-      })
-    });
-
-    const data = await response.json();
-
-    if (data.element_token) {
-      res.json({ token: data.element_token.token_value });
-    } else {
-      res.status(400).json({ 
-        error: "Failed to generate Cronofy token", 
-        details: data 
-      });
-    }
-  } catch (err) {
-    console.error("Cronofy Auth Error:", err);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
 
 app.post('/verify-otp', async (req, res) => {
   const { email, otp } = req.body;
@@ -406,12 +359,19 @@ app.post('/api/events/:id/toggle-attendance', async (req, res) => {
 app.post('/api/events', async (req, res) => {
   try {
     const { date, time, room } = req.body;
-    const existingEvent = await Event.findOne({ date, time, room });
+    const clash = await Event.findOne({ date, time, room });
 
-    if (existingEvent) {
+    if (clash) {
+      const standardSlots = ["08:00 AM", "10:00 AM", "01:00 PM", "03:00 PM", "05:00 PM"];
+      const bookedEvents = await Event.find({ date, room });
+      const bookedTimes = bookedEvents.map(e => e.time);
+      
+      const suggestions = standardSlots.filter(slot => !bookedTimes.includes(slot));
+
       return res.status(409).json({ 
         error: "Schedule Conflict", 
-        message: `The ${room} is already booked for ${existingEvent.title} at this time.` 
+        message: `The ${room} is already booked at ${time}.`,
+        suggestions: suggestions.length > 0 ? suggestions : ["No other slots available today"]
       });
     }
     const newEvent = new Event(req.body);

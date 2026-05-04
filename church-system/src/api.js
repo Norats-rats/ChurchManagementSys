@@ -17,10 +17,6 @@ export const api = {
   forgotPassword: (data) => apiClient.post('/forgot-password', data),
   resetPassword: (data) => apiClient.post('/reset-password', data),
 
-  // Scheduling Integration (Cronofy)
-  getCronofyToken: () => apiClient.post('/api/get-cronofy-token'),
-  
-
   // Members
   getMembers: () => apiClient.get('/api/members'),
   createMember: (memberData) => apiClient.post('/api/members', memberData),

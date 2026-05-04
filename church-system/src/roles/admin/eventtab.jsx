@@ -36,30 +36,36 @@ const EventTab = ({ role, userId }) => {
     }
   };
 
-  const handleCreateOrUpdate = async (e) => {
-    e.preventDefault();
-    
-    const combinedTitle = `${formData.titleSelection} for ${formData.reservationName}`;
-    const submissionData = { ...formData, title: combinedTitle };
+const handleCreateOrUpdate = async (e) => {
+  e.preventDefault();
+  
+  const combinedTitle = `${formData.titleSelection} for ${formData.reservationName}`;
+  const submissionData = { ...formData, title: combinedTitle };
 
-    try {
-      if (editingId) {
-        await api.updateEvent(editingId, submissionData); 
-      } else {
-        await api.createEvent(submissionData); 
-      }
-      setEditingId(null);
-      setFormData({ 
-        titleSelection: 'Worship Service', reservationName: '', 
-        category: 'Worship', date: '', time: '08:00 AM', 
-        room: '', expected: 0, type: 'Once', role: '' 
-      });
-      fetchEvents();
-    } catch (err) {
-      alert("Error saving event");
+  try {
+    if (editingId) {
+      await api.updateEvent(editingId, submissionData); 
+    } else {
+      await api.createEvent(submissionData); 
     }
-  };
-
+    setEditingId(null);
+    setFormData({ 
+      titleSelection: 'Worship Service', reservationName: '', 
+      category: 'Worship', date: '', time: '08:00 AM', 
+      room: '', expected: 0, type: 'Once', role: '' 
+    });
+    fetchEvents();
+    
+  } catch (err) {
+    if (err.response && err.response.status === 409) {
+      const { message, suggestions } = err.response.data;
+      const suggestionList = suggestions.join(", ");
+      alert(`${message}\n\nSuggested available times for this room:\n${suggestionList}`);
+    } else {
+      alert("Error saving event: " + (err.response?.data?.error || "Server error"));
+    }
+  }
+};
   const handleToggleAttendance = async (eventId) => {
     try {
       const response = await api.toggleEventAttendance(eventId, userId);
