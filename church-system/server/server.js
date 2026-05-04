@@ -76,7 +76,9 @@ const Member = mongoose.model('members', new mongoose.Schema({
 }));
 
 const Event = mongoose.model('events', new mongoose.Schema({
-  title: String,
+  title: String,             
+  titleSelection: String,    
+  reservationName: String,
   category: String, 
   date: String,     
   time: String,
@@ -152,6 +154,55 @@ app.post('/register', async (req, res) => {
     console.error("Detailed Register Error:", err);
     res.status(400).json({ error: err.message });
 }
+});
+
+app.post('/api/get-cronofy-token', async (req, res) => {
+  const response = await fetch('https://api.cronofy.com/v1/element_tokens', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.CRONOFY_ACCESS_TOKEN}`
+    },
+    body: JSON.stringify({
+      version: "1",
+      permissions: ["agenda", "availability"],
+      subsidiary_allowed: true
+    })
+  });
+  const data = await response.json();
+  res.json(data);
+});
+
+app.post('/api/get-cronofy-token', async (req, res) => {
+  try {
+    const response = await fetch('https://api.cronofy.com/v1/element_tokens', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        version: "1",
+        permissions: ["agenda", "availability"],
+        client_id: process.env.CRONOFY_CLIENT_ID,
+        client_secret: process.env.CRONOFY_CLIENT_SECRET,
+        subsidiary_allowed: true
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.element_token) {
+      res.json({ token: data.element_token.token_value });
+    } else {
+      res.status(400).json({ 
+        error: "Failed to generate Cronofy token", 
+        details: data 
+      });
+    }
+  } catch (err) {
+    console.error("Cronofy Auth Error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 app.post('/verify-otp', async (req, res) => {

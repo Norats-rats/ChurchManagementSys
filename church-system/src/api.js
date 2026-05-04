@@ -9,7 +9,6 @@ const apiClient = axios.create({
   },
 });
 
-
 export const api = {
   // Authentication
   login: (credentials) => apiClient.post('/login', credentials),
@@ -17,6 +16,9 @@ export const api = {
   verifyOtp: (data) => apiClient.post('/verify-otp', data),
   forgotPassword: (data) => apiClient.post('/forgot-password', data),
   resetPassword: (data) => apiClient.post('/reset-password', data),
+
+  // Scheduling Integration (Cronofy)
+  getCronofyToken: () => apiClient.post('/api/get-cronofy-token'),
 
   // Members
   getMembers: () => apiClient.get('/api/members'),

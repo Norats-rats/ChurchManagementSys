@@ -5,9 +5,17 @@ const EventTab = ({ role, userId }) => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
+  
   const [formData, setFormData] = useState({
-    title: '', category: 'Worship', date: '', time: '08:00 AM', 
-    room: 'Main Sanctuary', expected: 0, type: 'Once', role: ''
+    titleSelection: 'Worship Service', 
+    reservationName: '',              
+    category: 'Worship', 
+    date: '', 
+    time: '08:00 AM', 
+    room: '',                         
+    expected: 0, 
+    type: 'Once', 
+    role: ''
   });
 
   const canManage = role === 'Admin' || role === 'Ministry Leader';
@@ -28,6 +36,30 @@ const EventTab = ({ role, userId }) => {
     }
   };
 
+  const handleCreateOrUpdate = async (e) => {
+    e.preventDefault();
+    
+    const combinedTitle = `${formData.titleSelection} for ${formData.reservationName}`;
+    const submissionData = { ...formData, title: combinedTitle };
+
+    try {
+      if (editingId) {
+        await api.updateEvent(editingId, submissionData); 
+      } else {
+        await api.createEvent(submissionData); 
+      }
+      setEditingId(null);
+      setFormData({ 
+        titleSelection: 'Worship Service', reservationName: '', 
+        category: 'Worship', date: '', time: '08:00 AM', 
+        room: '', expected: 0, type: 'Once', role: '' 
+      });
+      fetchEvents();
+    } catch (err) {
+      alert("Error saving event");
+    }
+  };
+
   const handleToggleAttendance = async (eventId) => {
     try {
       const response = await api.toggleEventAttendance(eventId, userId);
@@ -36,22 +68,6 @@ const EventTab = ({ role, userId }) => {
       }
     } catch (err) {
       console.error("Attendance toggle failed", err);
-    }
-  };
-
-  const handleCreateOrUpdate = async (e) => {
-    e.preventDefault();
-    try {
-      if (editingId) {
-        await api.updateEvent(editingId, formData); 
-      } else {
-        await api.createEvent(formData); 
-      }
-      setEditingId(null);
-      setFormData({ title: '', category: 'Worship', date: '', time: '08:00 AM', room: 'Main Sanctuary', expected: 0, type: 'Once', role: '' });
-      fetchEvents();
-    } catch (err) {
-      alert("Error saving event");
     }
   };
 
@@ -80,21 +96,14 @@ const EventTab = ({ role, userId }) => {
     actionBtn: { border: 'none', background: 'none', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer', padding: '5px' },
     submitBtn: { width: '100%', padding: '12px', backgroundColor: '#6366f1', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginTop: '15px' },
     attendBtn: (isAttending) => ({ 
-      width: '100%', 
-      padding: '10px', 
-      backgroundColor: isAttending ? '#ef4444' : '#10b981', 
-      color: 'white', 
-      border: 'none', 
-      borderRadius: '8px', 
-      fontWeight: 'bold', 
-      cursor: 'pointer' 
+      width: '100%', padding: '10px', backgroundColor: isAttending ? '#ef4444' : '#10b981', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' 
     })
   };
 
   return (
     <div style={styles.container}>
       <div style={{ marginBottom: '20px' }}>
-        <h2 style={{ margin: 0, color: '#2d3748' }}>Church Events</h2>
+        <h2 style={{ margin: 0, color: '#2d3748' }}>Church Events & Scheduling</h2>
         <p style={{ color: '#718096', margin: '5px 0 0 0' }}>{canManage ? "Manage and schedule church activities" : "View and join upcoming activities"}</p>
       </div>
 
@@ -103,16 +112,43 @@ const EventTab = ({ role, userId }) => {
           <h3 style={{ marginTop: 0 }}>{editingId ? "Edit Event" : "Schedule New Event"}</h3>
           <form onSubmit={handleCreateOrUpdate}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-              <input style={{ padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0' }} placeholder="Event Title" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} required />
+              <select 
+                style={{ padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0' }} 
+                value={formData.titleSelection} 
+                onChange={e => setFormData({...formData, titleSelection: e.target.value})}
+              >
+                <option value="Worship Service">Worship Service</option>
+                <option value="Ministry Meeting">Ministry Meeting</option>
+                <option value="Youth Activity">Youth Activity</option>
+                <option value="Community Outreach">Community Outreach</option>
+                <option value="Facility Booking">Facility Booking</option>
+              </select>
+
+              <input 
+                style={{ padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0' }} 
+                placeholder="Booking/Reservation Name" 
+                value={formData.reservationName} 
+                onChange={e => setFormData({...formData, reservationName: e.target.value})} 
+                required 
+              />
+
               <select style={{ padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0' }} value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
-                <option value="Worship">Worship Service</option>
-                <option value="Ministry">Ministry Meeting</option>
-                <option value="Youth">Youth Activity</option>
+                <option value="Worship">Worship</option>
+                <option value="Ministry">Ministry</option>
+                <option value="Youth">Youth</option>
                 <option value="Other">Special Event</option>
               </select>
+              
               <input type="date" style={{ padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0' }} value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} required />
               <input type="time" style={{ padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0' }} value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} required />
-              <input style={{ padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0' }} placeholder="Venue/Room" value={formData.room} onChange={e => setFormData({...formData, room: e.target.value})} />
+              
+              <input 
+                style={{ padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0' }} 
+                placeholder="List down location" 
+                value={formData.room} 
+                onChange={e => setFormData({...formData, room: e.target.value})} 
+              />
+              
               <input style={{ padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0' }} placeholder="Lead Person" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} />
             </div>
             <button type="submit" style={styles.submitBtn}>{editingId ? "Update Event" : "Create Event"}</button>
@@ -136,7 +172,7 @@ const EventTab = ({ role, userId }) => {
                 <div style={styles.infoGrid}>
                   <span>📅 {event.date}</span>
                   <span>🕒 {event.time}</span>
-                  <span>📍 {event.room}</span>
+                  <span>📍 {event.room || "No location set"}</span>
                   <span style={{ fontWeight: 'bold', color: '#6366f1' }}>👥 Attending: {event.attendees?.length || 0}</span>
                 </div>
               </div>
