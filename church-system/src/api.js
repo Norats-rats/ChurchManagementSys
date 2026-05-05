@@ -38,10 +38,7 @@ export const api = {
   // Finances
   getFinances: () => apiClient.get('/api/finances'),
   addFinanceRecord: (transactionData) => apiClient.post('/api/finances', transactionData),
-  getFinances: () => axios.get('/api/finances'),
-  addFinanceRecord: (data) => axios.post('/api/finances', data),
   createCheckoutSession: (data) => apiClient.post('/api/paymongo/create-session', data),
-  createCheckoutSession: (data) => axios.post('/api/paymongo/create-session', data),
 
   // Ministries
   getMinistries: () => apiClient.get('/api/ministries'),
