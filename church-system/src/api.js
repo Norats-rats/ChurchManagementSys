@@ -41,9 +41,6 @@ export const api = {
   getFinances: () => axios.get('/api/finances'),
   addFinanceRecord: (data) => axios.post('/api/finances', data),
   createCheckoutSession: (data) => apiClient.post('/api/paymongo/create-session', data),
-};
-
-  // ADD THIS:
   createCheckoutSession: (data) => axios.post('/api/paymongo/create-session', data),
 
   // Ministries
