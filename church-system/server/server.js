@@ -123,7 +123,8 @@ const Transaction = mongoose.model('transactions', new mongoose.Schema({
   date: { type: Date, default: Date.now },
   description: { type: String, required: true },
   type: { type: String, enum: ['Income', 'Expense'], required: true },
-  amount: { type: Number, required: true }
+  amount: { type: Number, required: true },
+  userId: { type: String }
 }, { timestamps: true }));
 
 
@@ -282,6 +283,70 @@ app.post('/api/finances', async (req, res) => {
     await newTransaction.save();
     res.status(201).json(newTransaction);
   } catch (err) { res.status(400).json({ error: "Failed to save transaction" }); }
+});
+
+app.post('/api/paymongo/create-session', async (req, res) => {
+  const { amount, description, userId } = req.body;
+
+  try {
+    const options = {
+      method: 'POST',
+      url: 'https://api.paymongo.com/v1/checkout_sessions',
+      headers: {
+        accept: 'application/json',
+        'Content-Type': 'application/json',
+        authorization: `Basic ${Buffer.from(process.env.PAYMONGO_SECRET_KEY).toString('base64')}`
+      },
+      data: {
+        data: {
+          attributes: {
+            send_email_receipt: true,
+            show_description: true,
+            show_line_items: true,
+            description: description,
+            line_items: [{ 
+              currency: 'PHP', 
+              amount: Math.round(amount * 100), 
+              description: description, 
+              name: 'Church Donation', 
+              quantity: 1 
+            }],
+            payment_method_types: ['gcash', 'paymaya', 'grab_pay', 'card'],
+            success_url: `${process.env.FRONTEND_URL}/finances?status=success`,
+            cancel_url: `${process.env.FRONTEND_URL}/finances?status=cancelled`,
+            metadata: { userId: userId } 
+          }
+        }
+      }
+    };
+
+    const response = await axios.request(options);
+    res.json(response.data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error creating PayMongo session');
+  }
+});
+
+app.post('/api/paymongo/webhook', async (req, res) => {
+  const event = req.body.data.attributes;
+  const type = req.body.data.type;
+
+  if (type === 'checkout_session.payment.paid') {
+    const { amount, description, metadata } = event.data.attributes;
+    const newTransaction = new Transaction({
+      description: description || "Church Donation",
+      type: 'Income',
+      amount: amount / 100, 
+      userId: metadata.userId,
+      date: new Date()
+    });
+
+    await newTransaction.save();
+    console.log("Donation saved to database!");
+  }
+
+  res.status(200).send('Webhook received');
 });
 
 // MEMBER ROUTES

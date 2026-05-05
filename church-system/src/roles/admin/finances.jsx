@@ -41,54 +41,32 @@ const Finances = ({ role, userId }) => {
     }
   };
 
-  const handlePayMongoCheckout = async (amount, description) => {
-    setIsProcessing(true);
-    try {
-      const response = await fetch('https://api.paymongo.com/v1/checkout_sessions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${btoa('your_public_key_here')}` 
-        },
-        body: JSON.stringify({
-          data: {
-            attributes: {
-              send_email_receipt: true,
-              show_description: true,
-              show_line_items: true,
-              description: description,
-              line_items: [{
-                currency: 'PHP',
-                amount: amount * 100,
-                description: description,
-                name: 'Church Donation',
-                quantity: 1
-              }],
-              payment_method_types: ['gcash', 'paymaya', 'grab_pay', 'card'],
-              success_url: window.location.href,
-              cancel_url: window.location.href
-            }
-          }
-        })
-      });
-
-      const session = await response.json();
-      if (session.data?.attributes?.checkout_url) {
-        window.location.href = session.data.attributes.checkout_url;
-      }
-    } catch (err) {
-      alert("Payment gateway error. Please try again.");
-    } finally {
-      setIsProcessing(false);
+const handlePayMongoCheckout = async (amount, description) => {
+  setIsProcessing(true);
+  try {
+    const res = await api.createCheckoutSession({ 
+      amount, 
+      description, 
+      userId 
+    });
+    if (res.data?.data?.attributes?.checkout_url) {
+      window.location.href = res.data.data.attributes.checkout_url;
     }
-  };
+  } catch (err) {
+    console.error("Payment Error:", err);
+    alert("Checkout failed. Please try again.");
+  } finally {
+    setIsProcessing(false);
+  }
+};
 
-const handleAddIncome = async (e) => {
+  const handleAddIncome = async (e) => {
     e.preventDefault();
     const transactionData = {
       description: newDesc,
       type: 'Income',
       amount: parseFloat(newAmount),
+      date: newDate
     };
 
     try {
@@ -100,7 +78,7 @@ const handleAddIncome = async (e) => {
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to record income. Check console for error.");
+      alert("Failed to record income.");
     }
   };
 
@@ -118,23 +96,33 @@ const handleAddIncome = async (e) => {
     td: { padding: '15px', borderBottom: '1px solid #f1f5f9', fontSize: '14px' }
   };
 
+  if (loading) return <div style={styles.container}>Loading finances...</div>;
+
   return (
     <div style={styles.container}>
       <header style={{ marginBottom: '30px' }}>
-        <h2 style={{ margin: 0, color: '#053476' }}>{role === 'Member' ? 'Donation Options' : 'Financial Records'}</h2>
-        <p style={{ color: '#053476' }}>{role === 'Member' ? 'Support the church mission' : 'Tracking church financial health'}</p>
+        <h2 style={{ margin: 0, color: '#053476' }}>
+          {role === 'Member' ? 'Donation Options' : 'Financial Records'}
+        </h2>
+        <p style={{ color: '#053476' }}>
+          {role === 'Member' ? 'Support the church mission' : 'Tracking church financial health'}
+        </p>
       </header>
 
       {role !== 'Member' && (
         <div style={styles.statsGrid}>
           <div style={styles.card}>
             <span style={styles.label}>Total Church Income</span>
-            <div style={{ ...styles.amount, color: '#059669' }}>₱{stats.totalIncome.toLocaleString()}</div>
+            <div style={{ ...styles.amount, color: '#059669' }}>
+              ₱{stats.totalIncome.toLocaleString()}
+            </div>
           </div>
           {(role === 'Admin' || role === 'Ministry Leader') && (
             <div style={styles.card}>
               <span style={styles.label}>Net Balance</span>
-              <div style={styles.amount}>₱{stats.netBalance.toLocaleString()}</div>
+              <div style={styles.amount}>
+                ₱{stats.netBalance.toLocaleString()}
+              </div>
             </div>
           )}
         </div>
@@ -143,14 +131,23 @@ const handleAddIncome = async (e) => {
       {role === 'Member' && (
         <div style={styles.donationGrid}>
           <div 
-            style={{ ...styles.actionCard, opacity: isProcessing ? 0.5 : 1 }} 
+            style={{ 
+              ...styles.actionCard, 
+              opacity: isProcessing ? 0.5 : 1,
+              transform: isProcessing ? 'none' : 'scale(1)' 
+            }} 
             onClick={() => !isProcessing && handlePayMongoCheckout(500, "Church Tithes")}
           >
             <div style={{ fontSize: '32px' }}>📱</div>
             <h3 style={{ margin: '15px 0 5px' }}>E-Wallet / GCash</h3>
-            <p style={{ fontSize: '12px', color: '#64748b' }}>Secure payment via PayMongo</p>
+            <p style={{ fontSize: '12px', color: '#64748b' }}>
+              {isProcessing ? "Processing..." : "Secure payment via PayMongo"}
+            </p>
           </div>
-          <div style={styles.actionCard} onClick={() => alert("Bank: BPI\nAccount: [Insert Account]\nName: Free Believers Fellowship")}>
+          <div 
+            style={styles.actionCard} 
+            onClick={() => alert("Bank: BPI\nAccount: 1234-5678-90\nName: Free Believers Fellowship")}
+          >
             <div style={{ fontSize: '32px' }}>🏦</div>
             <h3 style={{ margin: '15px 0 5px' }}>Bank Transfer</h3>
             <p style={{ fontSize: '12px', color: '#64748b' }}>Direct deposit details</p>
@@ -161,11 +158,33 @@ const handleAddIncome = async (e) => {
       {(role === 'Admin' || role === 'Staff') && (
         <div style={{ ...styles.card, marginBottom: '30px' }}>
           <h4 style={{ marginTop: 0 }}>Record New Income</h4>
-          <form onSubmit={handleAddIncome} style={{ display: 'flex', gap: '15px' }}>
-            <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} style={{ padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
-            <input type="text" placeholder="Description" value={newDesc} onChange={e => setNewDesc(e.target.value)} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
-            <input type="number" placeholder="Amount" value={newAmount} onChange={e => setNewAmount(e.target.value)} style={{ width: '150px', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
-            <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Add Record</button>
+          <form onSubmit={handleAddIncome} style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+            <input 
+              type="date" 
+              value={newDate} 
+              onChange={e => setNewDate(e.target.value)} 
+              style={{ padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }} 
+            />
+            <input 
+              type="text" 
+              placeholder="Description" 
+              value={newDesc} 
+              onChange={e => setNewDesc(e.target.value)} 
+              style={{ flex: 1, minWidth: '200px', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }} 
+            />
+            <input 
+              type="number" 
+              placeholder="Amount" 
+              value={newAmount} 
+              onChange={e => setNewAmount(e.target.value)} 
+              style={{ width: '150px', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }} 
+            />
+            <button 
+              type="submit" 
+              style={{ padding: '10px 20px', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+            >
+              Add Record
+            </button>
           </form>
         </div>
       )}
@@ -187,7 +206,12 @@ const handleAddIncome = async (e) => {
                   <td style={styles.td}>{new Date(t.date).toLocaleDateString()}</td>
                   <td style={{ ...styles.td, fontWeight: '600' }}>{t.description}</td>
                   {role !== 'Member' && <td style={styles.td}>{t.type}</td>}
-                  <td style={{ ...styles.td, textAlign: 'right', fontWeight: 'bold', color: t.type === 'Income' ? '#059669' : '#dc2626' }}>
+                  <td style={{ 
+                    ...styles.td, 
+                    textAlign: 'right', 
+                    fontWeight: 'bold', 
+                    color: t.type === 'Income' ? '#059669' : '#dc2626' 
+                  }}>
                     ₱{t.amount.toLocaleString()}
                   </td>
                 </tr>

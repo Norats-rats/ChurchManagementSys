@@ -69,7 +69,7 @@ const fetchInitialData = async () => {
       
       if (res.ok) {
         setShowCreateForm(false);
-        setFormData({ name: '', leader: '', members: 0, schedule: '', color: '#2563eb' });
+        setFormData({ name: '', leader: '', members: 10, schedule: '', color: '#2563eb' });
         fetchInitialData();
       }
     } catch (err) { 
