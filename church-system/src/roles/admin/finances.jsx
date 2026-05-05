@@ -54,7 +54,7 @@ const handlePayMongoCheckout = async (amount, description) => {
     }
   } catch (err) {
     console.error("Payment Error:", err);
-    alert("Checkout failed. Please try again.");
+    alert("Could not initialize payment. Please try again.");
   } finally {
     setIsProcessing(false);
   }
